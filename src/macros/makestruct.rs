@@ -8,14 +8,26 @@
 /// memflex::makestruct! {
 ///     // Attributes works as expected
 ///     #[derive(Default)]
-///     pub struct Parent {
+///     struct Parent {
 ///         // on fields as well
 ///         // #[serde(skip)]
 ///         first: f32
 ///     }
 ///     
-///     pub struct Child(Parent) {
+///     // `pub` means that `parent` field will be `pub`.
+///     struct Child : pub Parent {
 ///         second: i32
+///     }
+/// 
+///     // Implements `Foo` interface on `Nested`
+///     struct Nested impl Foo : Child {
+///         third: bool
+///     }
+/// }
+/// 
+/// memflex::interface! {
+///     trait Foo {
+///         extern fn foo() = 0;
 ///     }
 /// }
 /// ```
@@ -24,7 +36,7 @@ macro_rules! makestruct {
     {
         $(
             $( #[$($outter:tt)*] )*
-            $vs:vis struct $sname:ident $( ($sparent:ident) )?  {
+            $vs:vis struct $sname:ident $(impl $($iface:ident),* )? $( : $pvis:vis $sparent:ident )?  {
                 $(
                     $( #[ $($foutter:tt)* ] )*
                     $fvs:vis $fname:ident: $fty:ty
@@ -35,12 +47,18 @@ macro_rules! makestruct {
         $(
             $( #[$($outter)*] )*
             $vs struct $sname {
-                $(parent: $sparent,)?
+                $($pvis parent: $sparent,)?
                 $(
                     $( #[ $($foutter)* ] )*
                     $fvs $fname: $fty
                 ),*
             }
+
+            $(
+                $(
+                    unsafe impl $iface for $sname { }
+                )*
+            )?
 
             $(
                 impl core::ops::Deref for $sname {

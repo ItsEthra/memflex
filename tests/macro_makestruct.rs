@@ -6,7 +6,7 @@ memflex::makestruct! {
     }
 
     #[derive(Default)]
-    struct Child(Parent) {
+    struct Child : Parent {
         second: i32
     }
 }
