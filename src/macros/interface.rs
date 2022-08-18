@@ -36,7 +36,7 @@ macro_rules! interface {
         $(
             $vs unsafe trait $iname: Sized {
                 $(
-                    $(extern $($abi)?)? fn $fname(&self, $($arg_name: $arg_ty),* ) $(-> $ret)? {
+                    $(extern $($abi)?)? fn $fname<'this>(&'this self, $($arg_name: $arg_ty),* ) $(-> $ret)? {
                         unsafe {
                             type Fn = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
 

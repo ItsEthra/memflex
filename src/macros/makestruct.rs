@@ -1,14 +1,16 @@
 /// Emulates C++ parenting, with constrain that child may only has ONE parent.
 /// # Behavior
-/// * Each struct declared within `makestruct` macro, will have C-like layout.
-/// * For each struct declared within `makestruct` macro with specified parent,
-/// will be generated:
+/// * Each struct declared within `makestruct` macro will have C-like layout.
+/// * For each struct declared within `makestruct` macro with specified parent there will be generated:
 ///     * Additional first field of parent type and name of `parent`
-///     * Deref<Target = Parent> implementation.
+///     * Deref<Target = Parent> implementation
 /// ```
 /// memflex::makestruct! {
+///     // Attributes works as expected
 ///     #[derive(Default)]
 ///     pub struct Parent {
+///         // on fields as well
+///         // #[serde(skip)]
 ///         first: f32
 ///     }
 ///     
