@@ -5,3 +5,6 @@ mod macros;
 
 mod global;
 pub use global::*;
+
+/// Module with helper functions for internal memory access.
+pub mod internal;
