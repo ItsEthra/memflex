@@ -5,3 +5,8 @@ edition = "2021"
 authors = ["ItsEthra"]
 license = "MIT"
 repository = "https://github.com/ItsEthra/memflex"
+
+[features]
+default = ["std", "internal"]
+std = []
+internal = []
