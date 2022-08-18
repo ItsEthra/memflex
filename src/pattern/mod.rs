@@ -35,7 +35,7 @@ const fn single(c: char) -> u8 {
 #[derive(Debug)]
 pub struct Pattern<const N: usize>([ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
-    /// Creates pattern from IDA style string
+    /// Creates pattern from IDA or PEID style string
     pub const fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
         let mut out = [ByteMatch::Any; N];
         
@@ -45,6 +45,7 @@ impl<const N: usize> Pattern<N> {
         while i < pat.len() - 1 {
             let c1 = unsafe { *pat.as_ptr().add(i) };
             let c2 = unsafe { *pat.as_ptr().add(i + 1) };
+            assert!(c1.is_ascii_alphanumeric() && c2.is_ascii_alphanumeric(), "Invalid pattern");
 
             if c1 == b'?' && c2 == if peid { b'?' } else { b' ' } {
                 out[j] = ByteMatch::Any;
@@ -62,7 +63,27 @@ impl<const N: usize> Pattern<N> {
             i += 1;
         }
 
-        Pattern(out)
+        Self(out)
+    }
+
+    /// Creates pattern from code style strings
+    pub const fn from_code_style(pat: &'static [u8], mask: &'static str) -> Pattern<N> {
+        let mut out = [ByteMatch::Any; N];
+
+        let mut i = 0;
+        while i < mask.len() {
+            let mask = unsafe { *mask.as_ptr().add(i) } as char;
+
+            match mask {
+                'x' => out[i] = ByteMatch::Exact(pat[i]),
+                '?' => out[i] = ByteMatch::Any,
+                _ => panic!("Invalid pattern")
+            }
+
+            i += 1;
+        }
+
+        Self(out)
     }
 }
 
@@ -98,7 +119,6 @@ macro_rules! peid_pat {
     };
 }
 
-
 #[doc(hidden)]
 pub const fn __ida_peid_count(pat: &'static str, peid: bool) -> usize {
     let mut i = 0;
@@ -121,4 +141,20 @@ pub const fn __ida_peid_count(pat: &'static str, peid: bool) -> usize {
     }
 
     j
+}
+
+/// Generates a pattern from code style strings.
+/// ```
+/// # use memflex::code_pat;
+/// 
+/// // Pattern creation is a constant cal
+/// let pat = code_pat!(b"\x11\x55\xE2", "x?x");
+/// ```
+#[macro_export]
+macro_rules! code_pat {
+    [
+        $pat:literal $(,)? $mask:literal
+    ] => {
+        $crate::pattern::Pattern::<{ $mask.len() }>::from_code_style($pat, $mask)
+    };
 }
