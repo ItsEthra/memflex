@@ -4,6 +4,9 @@
 
 mod macros;
 
+/// Module with support for various memory patterns
+pub mod pattern;
+
 mod global;
 pub use global::*;
 
