@@ -2,3 +2,6 @@
 #![warn(missing_docs)]
 
 mod macros;
+
+mod global;
+pub use global::*;
