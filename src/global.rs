@@ -59,6 +59,17 @@ impl<T> DerefMut for Global<T> {
 }
 
 #[doc(hidden)]
-pub fn __default_resolver(_: &str, _: usize) -> usize {
+#[cfg(windows)]
+pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
+    use crate::internal::find_module_by_name;
+
+    find_module_by_name(mod_name)
+        .expect("Module not found")
+        .base as usize + offset
+}
+
+#[doc(hidden)]
+#[cfg(not(windows))]
+pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
     todo!()
 }

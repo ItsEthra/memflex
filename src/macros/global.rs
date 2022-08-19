@@ -5,6 +5,7 @@
 /// }
 ///
 /// memflex::global! {
+///     // Uses default ldr resolver
 ///     pub static MY_GLOBAL: i32 = "app.exe"#0xAABB;
 ///
 ///     // Or use another function to get offset
@@ -15,7 +16,7 @@
 macro_rules! global {
     {
         $(
-            $vs:vis static $gname:ident: $gtype:ty = $( ($resolver:ident) )? $modname:literal #$offset:expr;
+            $vs:vis static $gname:ident: $gtype:ty = $( ($resolver:ident) )? $modname:literal $sep:tt $offset:expr;
         )*
     } => {
         $(
