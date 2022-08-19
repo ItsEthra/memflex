@@ -1,10 +1,12 @@
+use core::ptr::NonNull;
+
 /// Single link of doubly linked list.
 #[repr(C)]
 pub struct ListEntry<T> {
     /// Next link
-    pub next: *mut ListEntry<T>,
+    pub next: Option<NonNull<ListEntry<T>>>,
     /// Prev link
-    pub prev: *mut ListEntry<T>,
+    pub prev: *mut Option<NonNull<ListEntry<T>>>,
 }
 
 impl<T> Clone for ListEntry<T> {
@@ -38,11 +40,12 @@ impl<'a, T, const F: usize> Iterator for DoublyLinkedListIter<'a, T, F> {
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
             if self.start {
-                if self.current.next as usize == self.head as *const _ as usize {
+                if self.current.next?.as_ptr() as usize == self.head as *const _ as usize {
                     None
                 } else {
-                    let next = self.current.next.read();
-                    let item = self.current.next
+                    let next = self.current.next?.as_ptr().read();
+                    let item = self.current.next?
+                        .as_ptr()
                         .cast::<u8>()
                         .sub(F)
                         .cast::<T>()
@@ -52,8 +55,9 @@ impl<'a, T, const F: usize> Iterator for DoublyLinkedListIter<'a, T, F> {
                 }
             } else {
                 self.start = true;
-                self.current = self.head.next.read();
-                Some(self.head.next
+                self.current = self.head.next?.as_ptr().read();
+                Some(self.head.next?
+                    .as_ptr()
                     .cast::<u8>()
                     .sub(F)
                     .cast::<T>()
