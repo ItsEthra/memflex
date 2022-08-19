@@ -97,6 +97,21 @@ impl AllocationType {
     pub const MEM_TOP_DOWN: Self = Self(0x00100000);
 }
 
+/// Free flags, used to describe how to free memory
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct FreeType(pub u32);
+
+impl FreeType {
+    pub const MEM_COMMIT: Self = Self(0x00001000);
+    pub const MEM_RESERVE: Self = Self(0x00002000);
+    pub const MEM_RESET: Self = Self(0x00080000);
+    pub const MEM_RESET_UNDO: Self = Self(0x1000000);
+    pub const MEM_LARGE_PAGES: Self = Self(0x20000000);
+    pub const MEM_PHYSICAL: Self = Self(0x00400000);
+    pub const MEM_TOP_DOWN: Self = Self(0x00100000);
+}
+
 macro_rules! impl_traits {
     ($($ty:ty),*) => {
         $(
