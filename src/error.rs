@@ -9,6 +9,7 @@ pub enum MfError {
 impl MfError {
     #[cfg(windows)]
     pub(crate) fn last<T>() -> Result<T> {
+        #[link(name = "kernel32")]
         extern "C" {
             fn GetLastError() -> u32;
         }

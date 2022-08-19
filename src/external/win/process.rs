@@ -1,4 +1,7 @@
-use crate::{external::{Handle, NtResult}, MfError};
+use crate::{
+    external::{Handle, NtResult},
+    MfError,
+};
 use core::mem::{size_of, zeroed};
 
 #[link(name = "kernel32")]
@@ -11,11 +14,7 @@ extern "C" {
         read: Option<&mut usize>,
     ) -> NtResult;
 
-    fn OpenProcess(
-        access: u32,
-        inherit: i32,
-        id: u32
-    ) -> Handle;
+    fn OpenProcess(access: u32, inherit: i32, id: u32) -> Handle;
 }
 
 /// Owned handle to another process
@@ -60,7 +59,7 @@ impl OwnedProcess {
                 buf.len(),
                 Some(&mut read),
             )
-            .into(read)
+            .expect_nonzero(read)
         }
     }
 
@@ -76,7 +75,25 @@ impl OwnedProcess {
                 size_of::<T>(),
                 None,
             )
-            .into(buf)
+            .expect_nonzero(buf)
         }
     }
+}
+
+#[allow(missing_docs)]
+impl OwnedProcess {
+    pub const SYNCHRONIZE: u32 = 0x00100000;
+    pub const PROCESS_VM_WRITE: u32 = 0x0020;
+    pub const PROCESS_VM_READ: u32 = 0x0010;
+    pub const PROCESS_VM_OPERATION: u32 = 0x0008;
+    pub const PROCESS_TERMINATE: u32 = 0x0001;
+    pub const PROCESS_SUSPEND_RESUME: u32 = 0x0800;
+    pub const PROCESS_SET_QUOTA: u32 = 0x0100;
+    pub const PROCESS_SET_INFORMATION: u32 = 0x0200;
+    pub const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
+    pub const PROCESS_QUERY_INFORMATION: u32 = 0x0400;
+    pub const PROCESS_DUP_HANDLE: u32 = 0x0040;
+    pub const PROCESS_CREATE_THREAD: u32 = 0x0002;
+    pub const PROCESS_CREATE_PROCESS: u32 = 0x0080;
+    pub const PROCESS_ALL_ACCESS: u32 = 0x000F0000 | 0x00100000 | 0xFFFF;
 }
