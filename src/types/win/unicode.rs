@@ -7,6 +7,7 @@ use alloc::string::{String, FromUtf16Error};
 
 /// Unicode string in UTF-16 format
 #[derive(Debug)]
+#[repr(C)]
 pub struct UnicodeString {
     length: u16,
     capacity: u16,
