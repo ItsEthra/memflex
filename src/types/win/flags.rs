@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+use core::ops::{BitOr, BitOrAssign, BitAnd, BitAndAssign};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
@@ -25,9 +26,9 @@ impl ProcessAccess {
 /// Protection flags, usually used to describe memory
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct ProtectionFlags(pub u32);
+pub struct MemoryProtection(pub u32);
 
-impl ProtectionFlags {
+impl MemoryProtection {
     /// Checks if possible to read.
     pub fn read(&self) -> bool {
         match *self {
@@ -38,7 +39,7 @@ impl ProtectionFlags {
             | Self::PAGE_READONLY
             | Self::PAGE_READWRITE
             | Self::PAGE_WRITECOPY => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -49,7 +50,7 @@ impl ProtectionFlags {
             | Self::PAGE_EXECUTE_WRITECOPY
             | Self::PAGE_READWRITE
             | Self::PAGE_WRITECOPY => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -60,12 +61,12 @@ impl ProtectionFlags {
             | Self::PAGE_EXECUTE_READ
             | Self::PAGE_EXECUTE_READWRITE
             | Self::PAGE_EXECUTE_WRITECOPY => true,
-            _ => false
+            _ => false,
         }
     }
 }
 
-impl ProtectionFlags {
+impl MemoryProtection {
     pub const PAGE_EXECUTE: Self = Self(0x10);
     pub const PAGE_EXECUTE_READ: Self = Self(0x20);
     pub const PAGE_EXECUTE_READWRITE: Self = Self(0x40);
@@ -76,4 +77,58 @@ impl ProtectionFlags {
     pub const PAGE_WRITECOPY: Self = Self(0x08);
     pub const PAGE_TARGETS_INVALID: Self = Self(0x40000000);
     pub const PAGE_TARGETS_NO_UPDATE: Self = Self(0x40000000);
+    pub const PAGE_GUARD: Self = Self(0x100);
+    pub const PAGE_NOCACHE: Self = Self(0x200);
+    pub const PAGE_WRITECOMBINE: Self = Self(0x400);
 }
+
+/// Allocation flags, used to describe type of newly allocation region
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct AllocationType(pub u32);
+
+impl AllocationType {
+    pub const MEM_COMMIT: Self = Self(0x00001000);
+    pub const MEM_RESERVE: Self = Self(0x00002000);
+    pub const MEM_RESET: Self = Self(0x00080000);
+    pub const MEM_RESET_UNDO: Self = Self(0x1000000);
+    pub const MEM_LARGE_PAGES: Self = Self(0x20000000);
+    pub const MEM_PHYSICAL: Self = Self(0x00400000);
+    pub const MEM_TOP_DOWN: Self = Self(0x00100000);
+}
+
+macro_rules! impl_traits {
+    ($($ty:ty),*) => {
+        $(
+            impl BitOr for $ty {
+                type Output = Self;
+
+                fn bitor(self, rhs: Self) -> Self::Output {
+                    Self(self.0 | rhs.0)
+                }
+            }
+
+            impl BitOrAssign for $ty {
+                fn bitor_assign(&mut self, rhs: Self) {
+                    self.0 |= rhs.0
+                }
+            }
+
+            impl BitAnd for $ty {
+                type Output = Self;
+
+                fn bitand(self, rhs: Self) -> Self::Output {
+                    Self(self.0 & rhs.0)
+                }
+            }
+
+            impl BitAndAssign for $ty {
+                fn bitand_assign(&mut self, rhs: Self) {
+                    self.0 &= rhs.0
+                }
+            }
+        )*
+    };
+}
+
+impl_traits!(AllocationType, ProcessAccess, MemoryProtection);

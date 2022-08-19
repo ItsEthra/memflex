@@ -53,7 +53,7 @@ impl NtResult {
             Err(MfError::NtStatus(unsafe { GetLastError() }))
         }
     }
-    
+
     fn expect_zero<T>(self, val: T) -> crate::Result<T> {
         #[link(name = "kernel32")]
         extern "C" {

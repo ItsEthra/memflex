@@ -1,6 +1,7 @@
 use crate::{
     external::{Handle, NtResult},
-    MfError, types::{ProtectionFlags, ProcessAccess},
+    types::{MemoryProtection, ProcessAccess, AllocationType},
+    MfError,
 };
 use core::mem::{size_of, zeroed};
 
@@ -26,9 +27,17 @@ extern "C" {
         hnd: isize,
         addr: usize,
         size: usize,
-        new: ProtectionFlags,
-        old: &mut ProtectionFlags
+        new: MemoryProtection,
+        old: &mut MemoryProtection,
     ) -> NtResult;
+
+    fn VirtualAllocEx(
+        hnd: isize,
+        addr: usize,
+        size: usize,
+        alloc_type: AllocationType,
+        protection: MemoryProtection,
+    ) -> usize;
 
     fn OpenProcess(access: ProcessAccess, inherit: i32, id: u32) -> Handle;
 }
@@ -53,7 +62,11 @@ impl OwnedProcess {
     }
 
     /// Opens process by its id.
-    pub fn open_by_id(id: u32, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<Self> {
+    pub fn open_by_id(
+        id: u32,
+        inherit_handle: bool,
+        access_rights: ProcessAccess,
+    ) -> crate::Result<Self> {
         unsafe {
             let h = OpenProcess(access_rights, inherit_handle as i32, id);
             if h.is_invalid() {
@@ -85,7 +98,7 @@ impl OwnedProcess {
             let mut buf: T = zeroed();
 
             ReadProcessMemory(
-                self.0.0,
+                self.0 .0,
                 address,
                 &mut buf as *mut T as _,
                 size_of::<T>(),
@@ -101,12 +114,13 @@ impl OwnedProcess {
             let mut written: usize = 0;
 
             WriteProcessMemory(
-                self.0.0,
+                self.0 .0,
                 address,
                 buf.as_ptr(),
                 buf.len(),
-                Some(&mut written)
-            ).expect_nonzero(written)
+                Some(&mut written),
+            )
+            .expect_nonzero(written)
         }
     }
 
@@ -116,26 +130,51 @@ impl OwnedProcess {
             let mut written: usize = 0;
 
             WriteProcessMemory(
-                self.0.0,
+                self.0 .0,
                 address,
                 &value as *const T as _,
                 size_of::<T>(),
-                Some(&mut written)
-            ).expect_nonzero(written)
+                Some(&mut written),
+            )
+            .expect_nonzero(written)
         }
     }
 
     /// Changes the protection of memory pages, returning the old protection value.
-    pub fn protect(&self, address: usize, size: usize, protection: ProtectionFlags) -> crate::Result<ProtectionFlags> {
-        let mut old = ProtectionFlags(0);
+    pub fn protect(
+        &self,
+        address: usize,
+        size: usize,
+        protection: MemoryProtection,
+    ) -> crate::Result<MemoryProtection> {
+        let mut old = MemoryProtection(0);
         unsafe {
-            VirtualProtectEx(
-                self.0.0,
-                address,
+            VirtualProtectEx(self.0 .0, address, size, protection, &mut old).expect_nonzero(old)
+        }
+    }
+
+    /// Allocates new region of memory, returning pointer to it.
+    pub fn allocate(
+        &self,
+        desired_address: Option<usize>,
+        size: usize,
+        alloc_type: AllocationType,
+        protection: MemoryProtection,
+    ) -> crate::Result<usize> {
+        unsafe {
+            let addr = VirtualAllocEx(
+                self.0 .0,
+                desired_address.unwrap_or_default(),
                 size,
+                alloc_type,
                 protection,
-                &mut old
-            ).expect_nonzero(old)
+            );
+
+            if addr == 0 {
+                MfError::last()
+            } else {
+                Ok(addr)
+            }
         }
     }
 }
