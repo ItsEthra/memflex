@@ -6,6 +6,8 @@ use crate::{
 };
 use core::mem::{size_of, zeroed};
 
+use super::ModuleIterator;
+
 #[link(name = "kernel32")]
 extern "C" {
     fn ReadProcessMemory(
@@ -42,7 +44,9 @@ extern "C" {
 
     fn VirtualFreeEx(hnd: isize, addr: usize, size: usize, free_ty: FreeType) -> NtResult;
 
-    fn CreateToolhelp32Snapshot(flags: i32, pid: u32) -> Handle;
+    fn GetProcessId(hnd: isize) -> u32;
+
+    pub(crate) fn CreateToolhelp32Snapshot(flags: i32, pid: u32) -> Handle;
     fn Process32FirstW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
     fn Process32NextW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
 
@@ -175,6 +179,16 @@ impl OwnedProcess {
     pub fn free(&self, address: usize, size: usize, free_type: FreeType) -> crate::Result<()> {
         unsafe { VirtualFreeEx(self.0 .0, address, size, free_type).expect_nonzero(()) }
     }
+
+    /// Returns process's id.
+    pub fn id(&self) -> u32 {
+        unsafe { GetProcessId(self.0.0) }
+    }
+
+    /// Returns an iterator over process's modules
+    pub fn modules(&self) -> crate::Result<ModuleIterator> {
+        ModuleIterator::new(self.id())
+    }
 }
 
 #[repr(C)]
@@ -257,13 +271,13 @@ impl ProcessEntry {
 }
 
 impl From<&FfiProcessEntry> for ProcessEntry {
-    fn from(e: &FfiProcessEntry) -> Self {
+    fn from(pe: &FfiProcessEntry) -> Self {
         Self {
-            id: e.pid,
-            parent_id: e.parent,
-            default_heap: e.heap_id,
-            thread_count: e.cnt_threads,
-            path: String::from_utf16_lossy(unsafe { terminated_array(e.file_path.as_ptr(), 0) }),
+            id: pe.pid,
+            parent_id: pe.parent,
+            default_heap: pe.heap_id,
+            thread_count: pe.cnt_threads,
+            path: String::from_utf16_lossy(unsafe { terminated_array(pe.file_path.as_ptr(), 0) }),
         }
     }
 }
