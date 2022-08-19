@@ -24,11 +24,34 @@
 ///     struct Nested impl Foo : Child {
 ///         third: bool
 ///     }
+/// 
+///     struct ParentWithVmt impl ParentVmt {
+///         vmt: usize,
+///         t1: f32,
+///         t2: bool
+///     }
+/// 
+///     // By using `dyn ParentWithVmt`, child offsets all of their vfunc indices by the number of functions in `ParentWithVmt`,
+///     // should work with nested inheritance but hasn't been tested!
+///     struct ChildInheritsParentVmt impl ChildVmt(dyn ParentWithVmt) : pub ParentWithVmt {
+///         t3: u64,
+///         t4: i8
+///     }
 /// }
 ///
 /// memflex::interface! {
 ///     trait Foo {
 ///         extern fn foo() = 0;
+///     }
+/// 
+///     trait ParentVmt {
+///         fn f1() -> i32 = 0;
+///         fn f2() -> i32 = 0;
+///     }
+/// 
+///     trait ChildVmt {
+///         fn f3(a: i32) = 0;
+///         fn f4(a: i32) = 1;
 ///     }
 /// }
 /// ```
@@ -37,7 +60,7 @@ macro_rules! makestruct {
     {
         $(
             $( #[$($outter:tt)*] )*
-            $vs:vis struct $sname:ident $(impl $($iface:ident),* )? $( : $pvis:vis $sparent:ident )?  {
+            $vs:vis struct $sname:ident $(impl $($iface:ident $((dyn $piface:ty))? ),* )? $( : $pvis:vis $sparent:ident )?  {
                 $(
                     $( #[ $($foutter:tt)* ] )*
                     $fvs:vis $fname:ident: $fty:ty
@@ -57,7 +80,9 @@ macro_rules! makestruct {
 
             $(
                 $(
-                    unsafe impl $iface for $sname { }
+                    unsafe impl $iface for $sname {
+                        $( const INDEX_OFFSET: usize = <$piface>::FUNCTION_COUNT + <$piface>::INDEX_OFFSET; )?
+                    }
                 )*
             )?
 

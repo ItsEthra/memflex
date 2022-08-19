@@ -36,7 +36,7 @@ memflex::makestruct! {
     }
 
     #[derive(Default)]
-    struct Bar impl Qur : pub Foo {
+    struct Bar impl Qur(dyn Foo) : pub Foo {
         t3: u64,
         t4: f64
     }
@@ -44,5 +44,6 @@ memflex::makestruct! {
 
 #[test]
 fn test_makestruct_with_interface() {
-    
+    assert_eq!(Foo::INDEX_OFFSET, 0);
+    assert_eq!(Bar::INDEX_OFFSET, 2);
 }
