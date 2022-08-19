@@ -46,3 +46,76 @@ let last = memflex::internal::find_pattern_in_module(peid, "ntdll.dll").unwrap()
 let module = memflex::internal::find_module_by_name("ntdll.dll");
 // module.size, module.base
 ```
+* Macros for emulating C++ behavior
+```rust
+#[repr(C)]
+pub struct ConcreteType {
+    vmt: usize
+};
+
+memflex::interface! {
+    pub trait IPlayer impl for ConcreteType {
+        // Notice missing `&self`, this is intentional and macro will implicitly add it.
+        // Functions without `&self` in interface doesn't make much sense.
+        extern "C" fn get_health() -> i32 = 0; // 0 - Index of the virtual function.
+
+        // *Returns old health*
+        extern "C" fn set_health(new: i32) -> i32 = 1; // 1 - Index of the virtual function.
+    }
+
+    trait Foo {
+        extern fn foo() = 0;
+    }
+
+    trait ParentVmt {
+        fn f1() -> i32 = 0;
+        fn f2() -> i32 = 1;
+    }
+
+    trait ChildVmt {
+        fn f3(a: i32) = 0;
+        fn f4(a: i32) = 1;
+    }
+}
+
+memflex::makestruct! {
+    // Attributes works as expected
+    #[derive(Default)]
+    struct Parent {
+        // on fields as well
+        // #[serde(skip)]
+        first: f32
+    }
+    
+    // `pub` means that `parent` field will be `pub`
+    // but Deref<Target = Parent> implementation will be generated regardless.
+    struct Child : pub Parent {
+        second: i32
+    }
+
+    // Implements `Foo` interface on `Nested`
+    struct Nested impl Foo : Child {
+        third: bool
+    }
+
+    struct ParentWithVmt impl ParentVmt {
+        vmt: usize,
+        t1: f32,
+        t2: bool
+    }
+
+    // By using `dyn ParentWithVmt`, child offsets all of their vfunc indices by the number of functions in `ParentWithVmt`,
+    // should work with nested inheritance but hasn't been tested!
+    struct ChildInheritsParentVmt impl ChildVmt(dyn ParentWithVmt) : pub ParentWithVmt {
+        t3: u64,
+        t4: i8
+    }
+}
+
+memflex::global! {
+    // Uses default ldr resolver
+    pub static MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
+}
+
+let zero_terminated: *const i8 = memflex::cstr!("Hello, World!");
+```

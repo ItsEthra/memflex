@@ -46,7 +46,7 @@
 ///
 ///     trait ParentVmt {
 ///         fn f1() -> i32 = 0;
-///         fn f2() -> i32 = 0;
+///         fn f2() -> i32 = 1;
 ///     }
 ///
 ///     trait ChildVmt {
