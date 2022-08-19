@@ -56,9 +56,9 @@ pub struct ModuleIterator {
 
 impl ModuleIterator {
     /// Creates new iterator over process's modules.
-    pub fn new(pid: u32) -> crate::Result<Self> {
+    pub fn new(process_id: u32) -> crate::Result<Self> {
         unsafe {
-            let h = CreateToolhelp32Snapshot(0x8 | 0x10, pid);
+            let h = CreateToolhelp32Snapshot(0x8 | 0x10, process_id);
             if h.is_invalid() {
                 return MfError::last();
             }

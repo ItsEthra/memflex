@@ -10,6 +10,8 @@ pub enum MfError {
     ProcessNotFound,
     /// Specified module was not found
     ModuleNotFound,
+    /// No threads running in the process
+    NoThreads
 }
 
 impl MfError {
