@@ -2,10 +2,8 @@
 fn main() {
     use memflex::{
         iter_list,
-        types::{LdrDataTableEntry, Teb}, internal::find_module_by_name,
+        types::{LdrDataTableEntry, Teb},
     };
-
-    dbg!(find_module_by_name("iter_LInked.exe"));
 
     unsafe {
         let ldr = Teb::current().peb.ldr;

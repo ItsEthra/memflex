@@ -79,3 +79,16 @@ pub struct ModuleBasicInfo {
     /// Module's size
     pub size: usize,
 }
+
+/// More information about module
+#[derive(Debug, Clone)]
+pub struct ModuleAdvancedInfo {
+    /// Module's base
+    pub base: *const u8,
+    /// Module's size
+    pub size: usize,
+    /// Module's name
+    pub name: String,
+    /// Module's full path
+    pub path: String,
+}

@@ -1,5 +1,5 @@
-use crate::pattern::Pattern;
 use core::{ops::RangeInclusive, slice::from_raw_parts};
+use crate::pattern::Pattern;
 
 /// # Safety
 /// * `first` - a valid pointer.
@@ -80,58 +80,46 @@ pub unsafe fn pattern_search_range<const N: usize>(
 
 /// Searches for module's base address by its name.
 /// # Behavior
-/// Function iteraters over ldr searches for module entry (case insensetive).
-#[cfg(all(windows, feature = "alloc"))]
-#[inline]
+/// Function iteraters over ldr searches for module entry (ascii case insensetive).
+#[cfg(windows)]
 pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
     use crate::types::{Teb, ModuleBasicInfo};
 
-    let lc_name = name.to_lowercase();
-
-    Teb::current().peb.ldr.iter().find_map(|e| {
-        if unsafe { e.base_dll_name.to_string() }
-            .map(|s| s.to_lowercase() == lc_name)
-            .unwrap_or_default()
-        {
-            Some(ModuleBasicInfo {
-                size: e.image_size as usize,
-                base: e.dll_base,
-            })
-        } else {
-            None
-        }
-    })
+    Teb::current()
+        .peb
+        .ldr
+        .iter()
+        .filter(|e| e.base_dll_name.len() == name.len())
+        .find_map(|e| {
+            if unsafe {
+                e.base_dll_name
+                    .utf16()
+                    .zip(name.chars())
+                    .all(|(a, b)| a.eq_ignore_ascii_case(&b))
+            } {
+                Some(ModuleBasicInfo {
+                    size: e.image_size as usize,
+                    base: e.dll_base,
+                })
+            } else {
+                None
+            }
+        })
 }
 
-/// Searches for module's base address by its name.
-/// # Behavior
-/// Function iteraters over ldr searches for module entry (case insensetive).
-/// # Encoding
-/// This function works **ONLY** with ASCII charactrs. If module contains non ASCII characters it will be skipped
-#[cfg(all(windows, not(feature = "alloc")))]
-#[inline]
-pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
-    use crate::types::{ModuleBasicInfo, Teb};
+/// Returns an iterator over all modules in the current process
+/// # Panics
+/// If any module's name or path contain invalid UTF-16 sequence
+#[cfg(all(windows, feature = "alloc"))]
+pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
+    use crate::types::{Teb, ModuleAdvancedInfo};
 
-    unsafe {
-        Teb::current()
-            .peb
-            .ldr
-            .iter()
-            .filter(|e| e.base_dll_name.is_ascii() && e.base_dll_name.len() == name.len())
-            .find_map(|e| {
-                if e.base_dll_name
-                    .ascii()
-                    .zip(name.as_bytes().iter().map(|b| *b as char))
-                    .all(|(a, b)| a.eq_ignore_ascii_case(&b))
-                {
-                    Some(ModuleBasicInfo {
-                        size: e.image_size as usize,
-                        base: e.dll_base,
-                    })
-                } else {
-                    None
-                }
-            })
-    }
+    Teb::current().peb.ldr.iter().map(|e| unsafe {
+        ModuleAdvancedInfo {
+            base: e.dll_base,
+            size: e.image_size as usize,
+            name: e.base_dll_name.to_string().unwrap(),
+            path: e.full_dll_name.to_string().unwrap(),
+        }
+    })
 }
