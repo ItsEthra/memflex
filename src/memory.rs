@@ -5,7 +5,7 @@ use core::{ops::RangeInclusive, slice::from_raw_parts};
 /// * `first` - a valid pointer.
 /// * `last` - is contained within `usize::MAX` bytes away from `first`.
 /// ```
-/// # use memflex::internal::terminated_array;
+/// # use memflex::terminated_array;
 /// let items = b"123\x00";
 /// # unsafe {
 /// assert_eq!(terminated_array(items.as_ptr(), 0), &[b'1', b'2', b'3'])
@@ -26,7 +26,7 @@ pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -
 /// * `first` - a valid pointer.
 /// * `last` - is contained within `usize::MAX` bytes away from `first`.
 /// ```
-/// # use memflex::internal::terminated_array;
+/// # use memflex::terminated_array;
 /// let items = b"123\x00";
 /// # unsafe {
 /// assert_eq!(terminated_array(items.as_ptr(), 0), &[b'1', b'2', b'3'])

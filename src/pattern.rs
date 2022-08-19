@@ -142,7 +142,7 @@ macro_rules! ida_pat {
     [
         $pat:literal
     ] => {
-        $crate::pattern::Pattern::<{ $crate::pattern::__ida_peid_count($pat, false) }>::from_ida_peid_style($pat, false)
+        $crate::Pattern::<{ $crate::__ida_peid_count($pat, false) }>::from_ida_peid_style($pat, false)
     };
 }
 
@@ -157,7 +157,7 @@ macro_rules! peid_pat {
     [
         $pat:literal
     ] => {
-        $crate::pattern::Pattern::<{ $crate::pattern::__ida_peid_count($pat, true) }>::from_ida_peid_style($pat, true)
+        $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_ida_peid_style($pat, true)
     };
 }
 
@@ -196,6 +196,6 @@ macro_rules! code_pat {
     [
         $pat:literal $(,)? $mask:literal
     ] => {
-        $crate::pattern::Pattern::<{ $mask.len() }>::from_code_style($pat, $mask)
+        $crate::Pattern::<{ $mask.len() }>::from_code_style($pat, $mask)
     };
 }
