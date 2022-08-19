@@ -14,7 +14,8 @@
 ///         first: f32
 ///     }
 ///     
-///     // `pub` means that `parent` field will be `pub`.
+///     // `pub` means that `parent` field will be `pub`
+///     // but Deref<Target = Parent> implementation will be generated regardless.
 ///     struct Child : pub Parent {
 ///         second: i32
 ///     }

@@ -35,12 +35,15 @@ macro_rules! interface {
     } => {
         $(
             $vs unsafe trait $iname: Sized {
+                const INDEX_OFFSET: usize = 0;
+                const FUNCTION_COUNT: usize = $( $crate::__count_fns!($fname) + )*0;
+
                 $(
                     $(extern $($abi)?)? fn $fname<'this>(&'this self, $($arg_name: $arg_ty),* ) $(-> $ret)? {
                         unsafe {
                             type Fn = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
 
-                            ((**core::mem::transmute::<_, *const *const [Fn; $idx + 1]>(self))[$idx])(
+                            ((**core::mem::transmute::<_, *const *const [Fn; $idx + 1]>(self))[Self::INDEX_OFFSET + $idx])(
                                 self as *const Self as _,
                                 $($arg_name),*
                             )
@@ -56,4 +59,10 @@ macro_rules! interface {
             )?
         )*
     };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __count_fns {
+    ($a:ident) => { 1 };
 }

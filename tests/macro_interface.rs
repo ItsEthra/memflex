@@ -56,5 +56,6 @@ fn test_interface() {
         assert_eq!(this.get_health(), 100);
         assert_eq!(this.set_health(50), 100);
         assert_eq!(this.get_health(), 50);
+        assert_eq!(CFoo::FUNCTION_COUNT, 2);
     }
 }
