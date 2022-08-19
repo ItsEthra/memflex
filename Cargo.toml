@@ -12,6 +12,7 @@ std = ["alloc"]
 alloc = []
 internal = []
 nightly = []
+external = []
 
 [dependencies]
 memoffset = "0.6"

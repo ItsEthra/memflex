@@ -1,9 +1,9 @@
+use crate::Flow;
 use core::{
     marker::PhantomData,
-    ops::{ControlFlow, Try, FromResidual},
+    ops::{ControlFlow, FromResidual, Try},
     ptr::NonNull,
 };
-use crate::Flow;
 
 /// Mutable pointer with a static lifetime
 pub type PtrMutStatic<T> = PtrMut<'static, T>;
@@ -26,10 +26,7 @@ fn test_ptr_size() {
 impl<'a, T> PtrMut<'a, T> {
     /// Creates new pointer from reference
     pub fn new(r: &'a mut T) -> Self {
-        Self::Valid(
-            unsafe { NonNull::new_unchecked(r as *mut _) },
-            PhantomData,
-        )
+        Self::Valid(unsafe { NonNull::new_unchecked(r as *mut _) }, PhantomData)
     }
 
     /// Creates new pointer from reference with arbitrary lifetime

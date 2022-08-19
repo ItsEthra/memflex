@@ -29,3 +29,10 @@ pub use memory::*;
 mod ptr;
 #[cfg(feature = "nightly")]
 pub use ptr::*;
+
+/// Some handy external API for interacting with system
+#[cfg(feature = "external")]
+pub mod external;
+
+mod error;
+pub use error::*;

@@ -3,7 +3,7 @@ pub use r#const::*;
 mod r#mut;
 pub use r#mut::*;
 
-use core::ops::{ControlFlow, Try, FromResidual};
+use core::ops::{ControlFlow, FromResidual, Try};
 
 /// Function flow when checking pointers
 pub enum Flow<T> {

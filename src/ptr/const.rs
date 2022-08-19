@@ -1,9 +1,9 @@
+use crate::Flow;
 use core::{
     marker::PhantomData,
-    ops::{ControlFlow, Try, FromResidual},
+    ops::{ControlFlow, FromResidual, Try},
     ptr::NonNull,
 };
-use crate::Flow;
 
 /// Const pointer with a static lifetime
 pub type PtrStatic<T> = Ptr<'static, T>;
