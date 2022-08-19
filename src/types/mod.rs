@@ -2,9 +2,9 @@ use crate::internal::terminated_array;
 use core::ptr::NonNull;
 
 #[cfg(windows)]
-mod unicode;
+mod win;
 #[cfg(windows)]
-pub use unicode::*;
+pub use win::*;
 
 /// **Non null** C-Like zero terminated string
 /// # Safety
