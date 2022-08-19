@@ -4,8 +4,8 @@
 
 mod macros;
 
-/// Module with support for various memory patterns
-pub mod pattern;
+mod pattern;
+pub use pattern::*;
 
 #[cfg(feature = "internal")]
 mod global;
