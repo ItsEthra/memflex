@@ -69,7 +69,7 @@ impl<const N: usize> Pattern<N> {
     /// let data = b"\x13\x01\xD1";
     /// assert!(ida.matches(data));
     /// assert!(peid.matches(data));
-    pub fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
+    pub const fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
         let mut out = [ByteMatch::Any; N];
 
         let mut i = 0;
