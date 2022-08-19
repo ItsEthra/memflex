@@ -9,6 +9,10 @@ mod win;
 #[cfg(windows)]
 pub use win::*;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 
 /// **Non null** C-Like zero terminated string
 /// # Safety

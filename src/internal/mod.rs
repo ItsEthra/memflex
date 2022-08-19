@@ -60,6 +60,7 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
 /// # Behavior
 /// Looks up module by looking up RIP register.
 /// Can return `None` if module was manually mapped and not linked in ldr.
+#[cfg(all(windows, feature = "alloc"))]
 pub fn current_module() -> Option<crate::types::ModuleAdvancedInfo> {
     let mut rip: usize;
     unsafe {
