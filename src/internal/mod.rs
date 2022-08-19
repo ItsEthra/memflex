@@ -134,3 +134,16 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
         }
     })
 }
+
+/// Returns an information about current module
+/// # Behavior
+/// Looks up module by looking up RIP register.
+/// Can return `None` if module was manually mapped and not linked in ldr.
+pub fn current_module() -> Option<crate::types::ModuleAdvancedInfo> {
+    let mut rip: usize;
+    unsafe {
+        core::arch::asm!("lea {}, [rip]", out(reg) rip);
+        
+        modules().find(|m| rip < m.base as usize + m.size && rip > m.base as usize)
+    }
+}
