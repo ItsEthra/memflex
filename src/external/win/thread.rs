@@ -1,7 +1,8 @@
 use super::CreateToolhelp32Snapshot;
 use crate::{
     external::{Handle, NtResult},
-    MfError, types::ThreadRights,
+    types::ThreadRights,
+    MfError,
 };
 use core::mem::{size_of, zeroed};
 
@@ -14,11 +15,19 @@ extern "C" {
     fn SuspendThread(hnd: isize) -> u32;
     fn ResumeThread(hnd: isize) -> u32;
     fn TerminateThread(hnd: isize, code: u32) -> NtResult;
+
+    fn GetThreadId(hnd: isize) -> u32;
 }
 
 #[link(name = "ntdll")]
 extern "C" {
-    fn NtQueryInformationThread(hnd: isize, class: u32, buf: *mut u8, size: usize, out: Option<&mut usize>) -> NtResult;
+    fn NtQueryInformationThread(
+        hnd: isize,
+        class: u32,
+        buf: *mut u8,
+        size: usize,
+        out: Option<&mut usize>,
+    ) -> NtResult;
 }
 
 /// Owned handle to a process's thread
@@ -50,7 +59,7 @@ impl OwnedThread {
                 0x9,
                 &mut addr as *mut usize as _,
                 size_of::<usize>(),
-                None
+                None,
             )
             .expect_zero(addr)
         }
@@ -59,7 +68,7 @@ impl OwnedThread {
     /// Suspends thread
     pub fn suspend(&self) -> crate::Result<u32> {
         unsafe {
-            let i = SuspendThread(self.0.0);
+            let i = SuspendThread(self.0 .0);
             if i == u32::MAX {
                 MfError::last()
             } else {
@@ -71,7 +80,7 @@ impl OwnedThread {
     /// Resumes thread
     pub fn resume(&self) -> crate::Result<u32> {
         unsafe {
-            let i = ResumeThread(self.0.0);
+            let i = ResumeThread(self.0 .0);
             if i == u32::MAX {
                 MfError::last()
             } else {
@@ -82,9 +91,12 @@ impl OwnedThread {
 
     /// Terminates the thread with the specified code
     pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
-        unsafe {
-            TerminateThread(self.0.0, exit_code).expect_nonzero(())
-        }
+        unsafe { TerminateThread(self.0 .0, exit_code).expect_nonzero(()) }
+    }
+
+    /// Returns the id of the thread
+    pub fn id(&self) -> u32 {
+        unsafe { GetThreadId(self.0 .0) }
     }
 }
 

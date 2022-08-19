@@ -1,4 +1,4 @@
-use super::{ModuleEntry, ModuleIterator, ThreadIterator};
+use super::{ModuleEntry, ModuleIterator, OwnedThread, ThreadIterator};
 use crate::{
     external::{Handle, NtResult},
     terminated_array,
@@ -45,6 +45,16 @@ extern "C" {
     ) -> usize;
 
     fn VirtualFreeEx(hnd: isize, addr: usize, size: usize, free_ty: FreeType) -> NtResult;
+
+    fn CreateRemoteThread(
+        hnd: isize,
+        sec_attrs: *mut (),
+        stack_size: usize,
+        start_addr: usize,
+        param: usize,
+        create_flags: u32,
+        out_tid: Option<&mut u32>,
+    ) -> Handle;
 
     fn GetProcessId(hnd: isize) -> u32;
 
@@ -183,7 +193,34 @@ impl OwnedProcess {
         unsafe { VirtualFreeEx(self.0 .0, address, size, free_type).expect_nonzero(()) }
     }
 
-    /// Returns process's id.
+    /// Creates thread running in the process's context.
+    pub fn create_thread(
+        &self,
+        stack_size: Option<usize>,
+        start_address: usize,
+        param: usize,
+        suspended: bool,
+    ) -> crate::Result<OwnedThread> {
+        unsafe {
+            let h = CreateRemoteThread(
+                self.0 .0,
+                0 as _,
+                stack_size.unwrap_or_default(),
+                start_address,
+                param,
+                if suspended { 0x4 } else { 0 },
+                None,
+            );
+
+            if h.is_invalid() {
+                MfError::last()
+            } else {
+                Ok(OwnedThread::from_handle(h))
+            }
+        }
+    }
+
+    /// Returns the id of the process.
     pub fn id(&self) -> u32 {
         unsafe { GetProcessId(self.0 .0) }
     }
@@ -244,9 +281,7 @@ impl OwnedProcess {
 
     /// Terminates the process with the specified code.
     pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
-        unsafe {
-            TerminateProcess(self.0.0, exit_code).expect_nonzero(())
-        }
+        unsafe { TerminateProcess(self.0 .0, exit_code).expect_nonzero(()) }
     }
 }
 
