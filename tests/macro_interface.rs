@@ -4,13 +4,13 @@ mod game {
     #[repr(C)]
     struct FooVmt {
         idx0: extern "C" fn(&Foo) -> i32,
-        idx1: extern "C" fn(&mut Foo, i32) -> i32
+        idx1: extern "C" fn(&mut Foo, i32) -> i32,
     }
-    
+
     #[repr(C)]
     pub struct Foo {
         vmt: &'static FooVmt,
-        health: i32
+        health: i32,
     }
 
     impl Foo {
@@ -18,13 +18,13 @@ mod game {
             Foo {
                 vmt: &FooVmt {
                     idx0: Foo::get_health,
-                    idx1: Foo::set_health
+                    idx1: Foo::set_health,
                 },
-                health: 100
+                health: 100,
             }
         }
     }
-    
+
     impl Foo {
         pub extern "C" fn get_health(&self) -> i32 {
             self.health

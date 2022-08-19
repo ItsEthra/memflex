@@ -1,4 +1,3 @@
-
 memflex::makestruct! {
     #[derive(Default)]
     struct Parent {

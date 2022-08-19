@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Copy)]
 enum ByteMatch {
     Exact(u8),
-    Any
+    Any,
 }
 
 impl ByteMatch {
@@ -27,7 +27,7 @@ const fn single(c: char) -> u8 {
         'a'..='f' => 10 + (c as u8 - b'a'),
         'A'..='F' => 10 + (c as u8 - b'A'),
         '0'..='9' => c as u8 - b'0',
-        _ => panic!("Invalid pattern")
+        _ => panic!("Invalid pattern"),
     }
 }
 
@@ -38,7 +38,7 @@ impl<const N: usize> Pattern<N> {
     /// Checks if pattern matches byte slice
     /// ```
     /// # use memflex::ida_pat;
-    /// 
+    ///
     /// let data = b"\x11\x22\x33";
     /// let pat = ida_pat!("11 ? 33");
     /// assert!(pat.matches(data));
@@ -53,7 +53,7 @@ impl<const N: usize> Pattern<N> {
             if !self.0[i].matches(data[i]) {
                 return false;
             }
-            
+
             i += 1;
         }
         true
@@ -62,7 +62,7 @@ impl<const N: usize> Pattern<N> {
     /// Creates pattern from IDA or PEID style string
     /// ```
     /// # use memflex::{ida_pat, peid_pat} ;
-    /// 
+    ///
     /// // They are actually constant calls so all transformations happen at compile time
     /// let ida = ida_pat!("13 ? D1");
     /// let peid = ida_pat!("13 ? D1");
@@ -71,7 +71,7 @@ impl<const N: usize> Pattern<N> {
     /// assert!(peid.matches(data));
     pub fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
         let mut out = [ByteMatch::Any; N];
-        
+
         let mut i = 0;
         let mut j = 0;
 
@@ -101,7 +101,7 @@ impl<const N: usize> Pattern<N> {
     /// Creates pattern from code style strings
     /// ```
     /// # use memflex::code_pat;
-    /// 
+    ///
     /// let pat = code_pat!(b"\x11\x55\xE2", "x?x");
     /// let data = b"\x11\x01\xE2";
     /// assert!(pat.matches(data));
@@ -116,7 +116,7 @@ impl<const N: usize> Pattern<N> {
             match mask {
                 'x' => out[i] = ByteMatch::Exact(pat[i]),
                 '?' => out[i] = ByteMatch::Any,
-                _ => panic!("Invalid pattern")
+                _ => panic!("Invalid pattern"),
             }
 
             i += 1;
@@ -129,7 +129,7 @@ impl<const N: usize> Pattern<N> {
 /// Generates a pattern from IDA style string.
 /// ```
 /// # use memflex::ida_pat;
-/// 
+///
 /// // Pattern parsing is a contant call and happens at compile time
 /// let pat = ida_pat!("13 ? D1");
 /// ```
@@ -145,7 +145,7 @@ macro_rules! ida_pat {
 /// Generates a pattern from PEID style string.
 /// ```
 /// # use memflex::peid_pat;
-/// 
+///
 /// // Pattern parsing is a contant call and happens at compile time
 /// let pat = peid_pat!("13 ?? D1");
 /// ```
@@ -185,7 +185,7 @@ pub const fn __ida_peid_count(pat: &'static str, peid: bool) -> usize {
 /// Generates a pattern from code style strings.
 /// ```
 /// # use memflex::code_pat;
-/// 
+///
 /// // Pattern parsing is a contant call and happens at compile time
 /// let pat = code_pat!(b"\x11\x55\xE2", "x?x");
 /// ```

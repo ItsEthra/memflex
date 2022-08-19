@@ -3,11 +3,11 @@
 /// fn get_module_by_address(module: &str, offset: usize) -> usize {
 ///     todo!()
 /// }
-/// 
+///
 /// memflex::global! {
 ///     pub static MY_GLOBAL: i32 = "app.exe"#0xAABB;
-/// 
-///     // Or use another function to get offset;
+///
+///     // Or use another function to get offset
 ///     pub static HEALTH: f32 = (get_module_by_address)"app.exe"#0xFFEE;
 /// }
 /// ```

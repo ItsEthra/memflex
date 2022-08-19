@@ -18,13 +18,13 @@
 ///     struct Child : pub Parent {
 ///         second: i32
 ///     }
-/// 
+///
 ///     // Implements `Foo` interface on `Nested`
 ///     struct Nested impl Foo : Child {
 ///         third: bool
 ///     }
 /// }
-/// 
+///
 /// memflex::interface! {
 ///     trait Foo {
 ///         extern fn foo() = 0;

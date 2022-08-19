@@ -1,7 +1,7 @@
-use core::sync::atomic::{Ordering, AtomicUsize};
-use core::ops::{Deref, DerefMut};
 use core::marker::PhantomData;
 use core::mem::transmute;
+use core::ops::{Deref, DerefMut};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// Global variable that points to memory location.
 pub struct Global<T> {
@@ -14,8 +14,12 @@ pub struct Global<T> {
 }
 
 impl<T> Global<T> {
-    /// Creates new global that will resolve its address by module and offset on first access. 
-    pub const fn new(resolver: unsafe fn(&str, usize) -> usize, module: &'static str, offset: usize) -> Self {
+    /// Creates new global that will resolve its address by module and offset on first access.
+    pub const fn new(
+        resolver: unsafe fn(&str, usize) -> usize,
+        module: &'static str,
+        offset: usize,
+    ) -> Self {
         Self {
             address: AtomicUsize::new(0),
             _ph: PhantomData,

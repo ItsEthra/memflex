@@ -3,7 +3,7 @@
 /// /// The target struct cannot be zero sized!
 /// #[repr(C)]
 /// pub struct ConcreteType(usize);
-/// 
+///
 /// memflex::interface! {
 ///     pub trait IPlayer impl for ConcreteType {
 ///         // Notice missing `&self`, this is intentional and macro will implicitly add it.
@@ -13,7 +13,7 @@
 ///         extern "C" fn set_health(new: i32) -> i32 = 1; // 1 - Index of the virtual function.
 ///     }
 /// }
-/// 
+///
 /// /* C++ Code
 /// class IPlayer {
 /// public:
@@ -51,7 +51,7 @@ macro_rules! interface {
 
             $(
                 $(
-                    unsafe impl $iname for $implt { }  
+                    unsafe impl $iname for $implt { }
                 )*
             )?
         )*
