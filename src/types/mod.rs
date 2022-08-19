@@ -1,4 +1,4 @@
-use crate::internal::terminated_array;
+use crate::terminated_array;
 use core::{
     fmt::{self, Debug},
     ptr::NonNull,
@@ -8,6 +8,7 @@ use core::{
 mod win;
 #[cfg(windows)]
 pub use win::*;
+
 
 /// **Non null** C-Like zero terminated string
 /// # Safety
@@ -82,6 +83,7 @@ pub struct ModuleBasicInfo {
 
 /// More information about module
 #[derive(Debug, Clone)]
+#[cfg(feature = "alloc")]
 pub struct ModuleAdvancedInfo {
     /// Module's base
     pub base: *const u8,
