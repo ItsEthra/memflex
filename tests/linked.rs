@@ -31,6 +31,8 @@ memflex::makestruct! {
 #[cfg(windows)]
 #[test]
 fn test_linked() {
+    use memflex::types::DoublyLinkedListIter;
+
     unsafe {
         #[link(name = "ntdll")]
         extern "C" {
@@ -39,12 +41,10 @@ fn test_linked() {
 
         let ldr = NtCurrentTeb().peb.ldr;
         println!("{ldr:p}");
-        let head = ldr.in_memory_order_list.next
-            .cast::<u8>()
-            .sub(memoffset::offset_of!(LdrDataTableEntry, in_memory_order_links))
-            .cast::<LdrDataTableEntry>()
-            .read();
-        println!("{:?}", head.base_dll_name.to_string());
+            
+        for e in DoublyLinkedListIter::<LdrDataTableEntry, 0x10>::new(&ldr.in_memory_order_list) {
+            println!("{}", e.base_dll_name.to_string().unwrap());
+        }
         loop {}
     }
 }
