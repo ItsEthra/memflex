@@ -65,7 +65,8 @@ pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
 
     find_module_by_name(mod_name)
         .expect("Module not found")
-        .base as usize + offset
+        .base as usize
+        + offset
 }
 
 #[doc(hidden)]

@@ -1,5 +1,5 @@
-use core::{slice::from_raw_parts, ops::RangeInclusive};
 use crate::pattern::Pattern;
+use core::{ops::RangeInclusive, slice::from_raw_parts};
 
 /// # Safety
 /// * `first` - a valid pointer.
