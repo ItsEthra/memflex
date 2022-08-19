@@ -1,4 +1,4 @@
-use core::fmt::{Display, self};
+use core::fmt::{self, Display};
 
 /// Global error type
 #[derive(Debug)]
@@ -8,6 +8,8 @@ pub enum MfError {
     NtStatus(u32),
     /// Specified process was not found
     ProcessNotFound,
+    /// Specified module was not found
+    ModuleNotFound,
 }
 
 impl MfError {

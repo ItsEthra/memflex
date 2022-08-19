@@ -1,12 +1,14 @@
+use super::{ModuleEntry, ModuleIterator};
 use crate::{
     external::{Handle, NtResult},
     terminated_array,
     types::{AllocationType, FreeType, MemoryProtection, ProcessAccess},
-    MfError,
+    MfError, Pattern,
 };
-use core::mem::{size_of, zeroed};
-
-use super::ModuleIterator;
+use core::{
+    iter::from_fn,
+    mem::{size_of, zeroed},
+};
 
 #[link(name = "kernel32")]
 extern "C" {
@@ -182,12 +184,54 @@ impl OwnedProcess {
 
     /// Returns process's id.
     pub fn id(&self) -> u32 {
-        unsafe { GetProcessId(self.0.0) }
+        unsafe { GetProcessId(self.0 .0) }
     }
 
-    /// Returns an iterator over process's modules
+    /// Returns an iterator over process's modules.
     pub fn modules(&self) -> crate::Result<ModuleIterator> {
         ModuleIterator::new(self.id())
+    }
+
+    /// Searches for the module in the process.
+    pub fn find_module(&self, module_name: &str) -> crate::Result<ModuleEntry> {
+        self.modules()?
+            .find(|me| me.name.eq_ignore_ascii_case(module_name))
+            .ok_or(MfError::ModuleNotFound)
+    }
+
+    /// Finds all occurences of the pattern in a given range.
+    // @TODO: Can be optimized
+    pub fn find_pattern<const N: usize>(
+        &self,
+        pat: Pattern<N>,
+        start: usize,
+        len: usize,
+    ) -> impl Iterator<Item = usize> + '_ {
+        let mut offset = 0;
+        from_fn(move || {
+            while !self.read::<[u8; N]>(start + offset)
+                .map(|b| pat.matches(&b))
+                .unwrap_or_default() 
+            {
+                offset += 1;
+                
+                if offset >= len {
+                    return None;
+                }
+            }
+            offset += 1;
+            Some(start + offset - 1)
+        }).fuse()
+    }
+
+    /// Finds all occurences of the pattern in the specified module.
+    pub fn find_pattern_in_module<const N: usize>(
+        &self,
+        pat: Pattern<N>,
+        module_name: &str
+    ) -> crate::Result<impl Iterator<Item = usize> + '_> {
+        let module = self.find_module(module_name)?;
+        Ok(self.find_pattern(pat, module.base, module.size))
     }
 }
 
@@ -265,7 +309,11 @@ pub struct ProcessEntry {
 
 impl ProcessEntry {
     /// Opens process by the entry's process id.
-    pub fn open(&self, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+    pub fn open(
+        &self,
+        inherit_handle: bool,
+        access_rights: ProcessAccess,
+    ) -> crate::Result<OwnedProcess> {
         open_process_by_id(self.id, inherit_handle, access_rights)
     }
 }
@@ -283,18 +331,28 @@ impl From<&FfiProcessEntry> for ProcessEntry {
 }
 
 /// Tried to open process by name
-pub fn open_process_by_name(name: &str, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+pub fn open_process_by_name(
+    name: &str,
+    inherit_handle: bool,
+    access_rights: ProcessAccess,
+) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
-        .find_map(|pe| if pe.path.eq_ignore_ascii_case(name) {
-            Some(pe.open(inherit_handle, access_rights))
-        } else {
-            None
+        .find_map(|pe| {
+            if pe.path.eq_ignore_ascii_case(name) {
+                Some(pe.open(inherit_handle, access_rights))
+            } else {
+                None
+            }
         })
         .ok_or(MfError::ProcessNotFound)?
 }
 
 /// Tried to open process by id
-pub fn open_process_by_id(id: u32, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+pub fn open_process_by_id(
+    id: u32,
+    inherit_handle: bool,
+    access_rights: ProcessAccess,
+) -> crate::Result<OwnedProcess> {
     unsafe {
         let h = OpenProcess(access_rights, inherit_handle as i32, id);
         if h.is_invalid() {

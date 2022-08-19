@@ -1,6 +1,6 @@
-use crate::{external::Handle, MfError, terminated_array};
 use super::CreateToolhelp32Snapshot;
-use core::mem::{zeroed, size_of};
+use crate::{external::Handle, terminated_array, MfError};
+use core::mem::{size_of, zeroed};
 
 extern "C" {
     fn Module32FirstW(hnd: isize, lpme: &mut FfiModuleEntry) -> bool;
@@ -31,7 +31,7 @@ pub struct ModuleEntry {
     /// Module's name
     pub name: String,
     /// Module's path
-    pub path: String
+    pub path: String,
 }
 
 impl From<&FfiModuleEntry> for ModuleEntry {
@@ -51,7 +51,7 @@ impl From<&FfiModuleEntry> for ModuleEntry {
 pub struct ModuleIterator {
     h: Handle,
     entry: FfiModuleEntry,
-    stop: bool
+    stop: bool,
 }
 
 impl ModuleIterator {
