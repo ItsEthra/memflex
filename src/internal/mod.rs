@@ -97,3 +97,35 @@ pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> 
         }
     })
 }
+
+/// Searches for module's base address by its name.
+/// # Behavior
+/// Function iteraters over ldr searches for module entry (case insensetive).
+/// # Encoding
+/// This function works **ONLY** with ASCII charactrs. If module contains non ASCII characters it will be skipped
+#[cfg(all(windows, not(feature = "alloc")))]
+pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
+    use crate::types::{ModuleBasicInfo, Teb};
+
+    unsafe {
+        Teb::current()
+            .peb
+            .ldr
+            .iter()
+            .filter(|e| e.base_dll_name.is_ascii() && e.base_dll_name.len() == name.len())
+            .find_map(|e| {
+                if e.base_dll_name
+                    .ascii()
+                    .zip(name.as_bytes().iter().map(|b| *b as char))
+                    .all(|(a, b)| a.eq_ignore_ascii_case(&b))
+                {
+                    Some(ModuleBasicInfo {
+                        size: e.image_size as usize,
+                        base: e.dll_base,
+                    })
+                } else {
+                    None
+                }
+            })
+    }
+}

@@ -62,10 +62,15 @@ impl UnicodeString {
     /// # Safety
     /// * [`UnicodeString`] must be a valid pointer
     pub unsafe fn is_ascii(&self) -> bool {
-        self.as_slice()
-            .iter()
-            .map(|b| char::decode_utf16([*b]))
-            .flatten()
-            .all(|c| c.is_ok())
+        self.as_slice().iter().all(|b| *b < 128)
+    }
+
+    /// Creates an iterator over all string character if they are ascii.
+    /// # Panics
+    /// * If string contains non-ascii characters.
+    pub unsafe fn ascii(&self) -> impl Iterator<Item = char> {
+        assert!(self.is_ascii());
+
+        self.as_slice().iter().map(|b| *b as u8 as char)
     }
 }

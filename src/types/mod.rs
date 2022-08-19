@@ -53,6 +53,7 @@ impl Debug for CStr {
 }
 
 /// Basic information about module
+#[derive(Debug, Clone, Copy)]
 pub struct ModuleBasicInfo {
     /// Module's base
     pub base: *const u8,
