@@ -11,7 +11,7 @@ pub enum MfError {
     /// Specified module was not found
     ModuleNotFound,
     /// No threads running in the process
-    NoThreads
+    NoThreads,
 }
 
 impl MfError {

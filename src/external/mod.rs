@@ -39,6 +39,7 @@ impl From<Handle> for isize {
 }
 
 #[repr(transparent)]
+#[derive(Debug)]
 pub(crate) struct NtResult(u32);
 impl NtResult {
     fn expect_nonzero<T>(self, val: T) -> crate::Result<T> {

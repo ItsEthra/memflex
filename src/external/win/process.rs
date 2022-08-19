@@ -1,8 +1,8 @@
-use super::{ModuleEntry, ModuleIterator};
+use super::{ModuleEntry, ModuleIterator, ThreadIterator};
 use crate::{
     external::{Handle, NtResult},
     terminated_array,
-    types::{AllocationType, FreeType, MemoryProtection, ProcessAccess},
+    types::{AllocationType, FreeType, MemoryProtection, ProcessRights},
     MfError, Pattern,
 };
 use core::{
@@ -52,7 +52,8 @@ extern "C" {
     fn Process32FirstW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
     fn Process32NextW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
 
-    fn OpenProcess(access: ProcessAccess, inherit: i32, id: u32) -> Handle;
+    fn OpenProcess(access: ProcessRights, inherit: i32, id: u32) -> Handle;
+    fn TerminateProcess(hnd: isize, code: u32) -> NtResult;
 }
 
 /// Owned handle to another process
@@ -192,6 +193,11 @@ impl OwnedProcess {
         ModuleIterator::new(self.id())
     }
 
+    /// Returns an iterator over process's threads.
+    pub fn threads(&self) -> crate::Result<ThreadIterator> {
+        ThreadIterator::new(self.id())
+    }
+
     /// Searches for the module in the process.
     pub fn find_module(&self, module_name: &str) -> crate::Result<ModuleEntry> {
         self.modules()?
@@ -209,29 +215,38 @@ impl OwnedProcess {
     ) -> impl Iterator<Item = usize> + '_ {
         let mut offset = 0;
         from_fn(move || {
-            while !self.read::<[u8; N]>(start + offset)
+            while !self
+                .read::<[u8; N]>(start + offset)
                 .map(|b| pat.matches(&b))
-                .unwrap_or_default() 
+                .unwrap_or_default()
             {
                 offset += 1;
-                
+
                 if offset >= len {
                     return None;
                 }
             }
             offset += 1;
             Some(start + offset - 1)
-        }).fuse()
+        })
+        .fuse()
     }
 
     /// Finds all occurences of the pattern in the specified module.
     pub fn find_pattern_in_module<const N: usize>(
         &self,
         pat: Pattern<N>,
-        module_name: &str
+        module_name: &str,
     ) -> crate::Result<impl Iterator<Item = usize> + '_> {
         let module = self.find_module(module_name)?;
         Ok(self.find_pattern(pat, module.base, module.size))
+    }
+
+    /// Terminates the process with the specified code.
+    pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
+        unsafe {
+            TerminateProcess(self.0.0, exit_code).expect_nonzero(())
+        }
     }
 }
 
@@ -312,7 +327,7 @@ impl ProcessEntry {
     pub fn open(
         &self,
         inherit_handle: bool,
-        access_rights: ProcessAccess,
+        access_rights: ProcessRights,
     ) -> crate::Result<OwnedProcess> {
         open_process_by_id(self.id, inherit_handle, access_rights)
     }
@@ -334,7 +349,7 @@ impl From<&FfiProcessEntry> for ProcessEntry {
 pub fn open_process_by_name(
     name: &str,
     inherit_handle: bool,
-    access_rights: ProcessAccess,
+    access_rights: ProcessRights,
 ) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
         .find_map(|pe| {
@@ -351,7 +366,7 @@ pub fn open_process_by_name(
 pub fn open_process_by_id(
     id: u32,
     inherit_handle: bool,
-    access_rights: ProcessAccess,
+    access_rights: ProcessRights,
 ) -> crate::Result<OwnedProcess> {
     unsafe {
         let h = OpenProcess(access_rights, inherit_handle as i32, id);

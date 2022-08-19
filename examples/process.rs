@@ -1,9 +1,13 @@
-use memflex::{external::{open_process_by_id, ThreadIterator}, types::ProcessAccess};
+use memflex::{
+    external::{open_process_by_id, ThreadIterator},
+    types::{ProcessRights, ThreadRights},
+};
 
 fn main() {
-    let p = open_process_by_id(2396, false, ProcessAccess::PROCESS_ALL_ACCESS).unwrap();
+    let p = open_process_by_id(40424, false, ProcessRights::ALL_ACCESS).unwrap();
 
     for t in ThreadIterator::new(p.id()).unwrap() {
-        dbg!(t);
+        let o = t.open(false, ThreadRights::ALL_ACCESS).unwrap();
+        println!("{:X}", o.start_address().unwrap());
     }
 }
