@@ -24,13 +24,13 @@
 ///     struct Nested impl Foo : Child {
 ///         third: bool
 ///     }
-/// 
+///
 ///     struct ParentWithVmt impl ParentVmt {
 ///         vmt: usize,
 ///         t1: f32,
 ///         t2: bool
 ///     }
-/// 
+///
 ///     // By using `dyn ParentWithVmt`, child offsets all of their vfunc indices by the number of functions in `ParentWithVmt`,
 ///     // should work with nested inheritance but hasn't been tested!
 ///     struct ChildInheritsParentVmt impl ChildVmt(dyn ParentWithVmt) : pub ParentWithVmt {
@@ -43,12 +43,12 @@
 ///     trait Foo {
 ///         extern fn foo() = 0;
 ///     }
-/// 
+///
 ///     trait ParentVmt {
 ///         fn f1() -> i32 = 0;
 ///         fn f2() -> i32 = 0;
 ///     }
-/// 
+///
 ///     trait ChildVmt {
 ///         fn f3(a: i32) = 0;
 ///         fn f4(a: i32) = 1;

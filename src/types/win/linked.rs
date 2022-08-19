@@ -11,17 +11,20 @@ pub struct ListEntry<T> {
 
 impl<T> Clone for ListEntry<T> {
     fn clone(&self) -> Self {
-        Self { next: self.next, prev: self.prev }
+        Self {
+            next: self.next,
+            prev: self.prev,
+        }
     }
 }
-impl<T> Copy for ListEntry<T> { }
+impl<T> Copy for ListEntry<T> {}
 
 /// Iterator over links of doubly linked list.
 pub struct DoublyLinkedListIter<'a, T> {
     head: &'a ListEntry<T>,
     current: ListEntry<T>,
     start: bool,
-    offset: usize
+    offset: usize,
 }
 
 impl<'a, T> DoublyLinkedListIter<'a, T> {
@@ -46,7 +49,9 @@ impl<'a, T> Iterator for DoublyLinkedListIter<'a, T> {
                     None
                 } else {
                     let next = self.current.next?.as_ptr().read();
-                    let item = self.current.next?
+                    let item = self
+                        .current
+                        .next?
                         .as_ptr()
                         .cast::<u8>()
                         .sub(self.offset)
@@ -58,12 +63,15 @@ impl<'a, T> Iterator for DoublyLinkedListIter<'a, T> {
             } else {
                 self.start = true;
                 self.current = self.head.next?.as_ptr().read();
-                Some(self.head.next?
-                    .as_ptr()
-                    .cast::<u8>()
-                    .sub(self.offset)
-                    .cast::<T>()
-                    .read())
+                Some(
+                    self.head
+                        .next?
+                        .as_ptr()
+                        .cast::<u8>()
+                        .sub(self.offset)
+                        .cast::<T>()
+                        .read(),
+                )
             }
         }
     }
@@ -73,6 +81,9 @@ impl<'a, T> Iterator for DoublyLinkedListIter<'a, T> {
 #[macro_export]
 macro_rules! iter_list {
     ($head:expr, $entry:ty, $field:ident) => {
-        $crate::types::DoublyLinkedListIter::new($head, $crate::memoffset::offset_of!($entry, $field))
+        $crate::types::DoublyLinkedListIter::new(
+            $head,
+            $crate::memoffset::offset_of!($entry, $field),
+        )
     };
 }

@@ -1,9 +1,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
-use core::{slice::from_raw_parts, mem::size_of, fmt::Debug};
+use core::{fmt::Debug, mem::size_of, slice::from_raw_parts};
 
 #[cfg(feature = "alloc")]
-use alloc::string::{String, FromUtf16Error};
+use alloc::string::{FromUtf16Error, String};
 
 /// Unicode string in UTF-16 format
 #[derive(Debug)]
@@ -11,7 +11,7 @@ use alloc::string::{String, FromUtf16Error};
 pub struct UnicodeString {
     length: u16,
     capacity: u16,
-    buffer: *const u16
+    buffer: *const u16,
 }
 
 impl UnicodeString {

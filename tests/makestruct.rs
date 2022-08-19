@@ -32,7 +32,7 @@ memflex::makestruct! {
     #[derive(Default)]
     struct Foo impl Tux {
         t1: i32,
-        t2: f32   
+        t2: f32
     }
 
     #[derive(Default)]

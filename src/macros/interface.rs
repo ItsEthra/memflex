@@ -67,5 +67,7 @@ macro_rules! interface {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __count_fns {
-    ($a:ident) => { 1 };
+    ($a:ident) => {
+        1
+    };
 }

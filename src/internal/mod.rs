@@ -1,5 +1,5 @@
-use core::{ops::RangeInclusive, slice::from_raw_parts};
 use crate::pattern::Pattern;
+use core::{ops::RangeInclusive, slice::from_raw_parts};
 
 /// # Safety
 /// * `first` - a valid pointer.
@@ -47,20 +47,46 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// # Safety
 /// * `start` is a valid pointer and can be read
 /// * Memory from `start` to `start + len` (inclusive) can be read
-pub unsafe fn pattern_search<const N: usize>(pat: Pattern<N>, start: *const u8, len: usize) -> impl Iterator<Item = *const u8> {
+pub unsafe fn pattern_search<const N: usize>(
+    pat: Pattern<N>,
+    start: *const u8,
+    len: usize,
+) -> impl Iterator<Item = *const u8> {
     from_raw_parts::<u8>(start, len)
         .windows(N)
         .enumerate()
-        .filter_map(move |(i, bytes)| if pat.matches(bytes) {
-            Some(start.add(i))
-        } else {
-            None
+        .filter_map(move |(i, bytes)| {
+            if pat.matches(bytes) {
+                Some(start.add(i))
+            } else {
+                None
+            }
         })
 }
 
 /// Searches for a pattern internally in a given range
 /// # Safety
 /// * Range represents a chunk of memory that can be read.
-pub unsafe fn pattern_search_range<const N: usize>(pat: Pattern<N>, range: RangeInclusive<usize>) -> impl Iterator<Item = *const u8> {
+pub unsafe fn pattern_search_range<const N: usize>(
+    pat: Pattern<N>,
+    range: RangeInclusive<usize>,
+) -> impl Iterator<Item = *const u8> {
     pattern_search(pat, *range.start() as _, *range.end() - *range.start())
+}
+
+/// Searches for module's base address by its name.
+#[cfg(all(windows, feature = "alloc"))]
+pub fn find_module_by_name(name: &str) -> Option<*const u8> {
+    use crate::types::Teb;
+
+    Teb::current().peb.ldr.iter().find_map(|e| {
+        if unsafe { e.base_dll_name.to_string() }
+            .map(|s| s == name)
+            .unwrap_or_default()
+        {
+            Some(e.dll_base)
+        } else {
+            None
+        }
+    })
 }

@@ -1,5 +1,8 @@
 use crate::internal::terminated_array;
-use core::{ptr::NonNull, fmt::{Debug, self}};
+use core::{
+    fmt::{self, Debug},
+    ptr::NonNull,
+};
 
 #[cfg(windows)]
 mod win;
@@ -14,7 +17,7 @@ pub use win::*;
 #[repr(transparent)]
 pub struct CStr {
     /// Pointer to string data
-    pub ptr: NonNull<i8>
+    pub ptr: NonNull<i8>,
 }
 
 impl CStr {
@@ -22,19 +25,17 @@ impl CStr {
     pub fn from_ptr(ptr: NonNull<i8>) -> Self {
         Self { ptr }
     }
-    
+
     /// Converts [`CStr`] into raw pointer..
     pub fn into_ptr(self) -> *const i8 {
-        self.ptr.as_ptr() as _    
+        self.ptr.as_ptr() as _
     }
 
     /// Converts [`CStr`] to string slice.
     /// # Safety
     /// * [`CStr`] must point to a valid UTF-8 sequence.
     pub unsafe fn as_str<'a>(&self) -> &'a str {
-        core::str::from_utf8_unchecked(
-            terminated_array::<u8>(self.ptr.as_ptr() as _, 0)
-        )
+        core::str::from_utf8_unchecked(terminated_array::<u8>(self.ptr.as_ptr() as _, 0))
     }
 
     /// Converts [`CStr`] into signed byte slice.
