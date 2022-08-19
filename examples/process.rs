@@ -1,6 +1,6 @@
 use memflex::{
     external::OwnedProcess,
-    types::{MemoryProtection, ProcessAccess, AllocationType},
+    types::{AllocationType, MemoryProtection, ProcessAccess},
 };
 
 fn main() {
@@ -15,12 +15,14 @@ fn main() {
         .unwrap());
     dbg!(p.write::<u64>(0x0007FF7F016D53A, 0x90).unwrap());
 
-    let v = dbg!(p.allocate(
-        None,
-        0x10,
-        AllocationType::MEM_COMMIT | AllocationType::MEM_RESERVE,
-        MemoryProtection::PAGE_EXECUTE_READWRITE
-    ).unwrap());
+    let v = dbg!(p
+        .allocate(
+            None,
+            0x10,
+            AllocationType::MEM_COMMIT | AllocationType::MEM_RESERVE,
+            MemoryProtection::PAGE_EXECUTE_READWRITE
+        )
+        .unwrap());
 
     println!("{:X}", v);
 }

@@ -1,6 +1,6 @@
 use crate::{
     external::{Handle, NtResult},
-    types::{MemoryProtection, ProcessAccess, AllocationType, FreeType},
+    types::{AllocationType, FreeType, MemoryProtection, ProcessAccess},
     MfError,
 };
 use core::mem::{size_of, zeroed};
@@ -39,12 +39,7 @@ extern "C" {
         protection: MemoryProtection,
     ) -> usize;
 
-    fn VirtualFreeEx(
-        hnd: isize,
-        addr: usize,
-        size: usize,
-        free_ty: FreeType
-    ) -> NtResult;
+    fn VirtualFreeEx(hnd: isize, addr: usize, size: usize, free_ty: FreeType) -> NtResult;
 
     fn OpenProcess(access: ProcessAccess, inherit: i32, id: u32) -> Handle;
 }
@@ -188,20 +183,7 @@ impl OwnedProcess {
     /// Frees region of memory.
     /// # Behavior
     /// If `free_type` is `MEM_RELEASE` then `size` must be 0.
-    pub fn free(
-        &self,
-        address: usize,
-        size: usize,
-        free_type: FreeType
-    ) -> crate::Result<()>
-    {
-        unsafe {
-            VirtualFreeEx(
-                self.0.0,
-                address,
-                size,
-                free_type
-            ).expect_nonzero(())
-        }
+    pub fn free(&self, address: usize, size: usize, free_type: FreeType) -> crate::Result<()> {
+        unsafe { VirtualFreeEx(self.0 .0, address, size, free_type).expect_nonzero(()) }
     }
 }

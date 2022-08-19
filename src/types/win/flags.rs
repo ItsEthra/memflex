@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use core::ops::{BitOr, BitOrAssign, BitAnd, BitAndAssign};
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
