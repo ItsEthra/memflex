@@ -1,34 +1,28 @@
-use memflex::{Flow, Ptr, PtrStatic};
+use memflex::{Flow, Ptr};
 
 fn main() {
-    unsafe {
-        let val = 5;
-        let s = StructWithPtr {
-            icanbenull: Ptr::new_unchecked(&val),
-        };
-        sub(s);
-    }
+    let val = 5;
+    let s = StructWithPtr(Ptr::new(&val));
+    sub(s);
 }
 
-struct StructWithPtr {
-    icanbenull: PtrStatic<u32>,
-}
+struct StructWithPtr<'a>(Ptr<'a, u32>);
 
 fn sub(s: StructWithPtr) -> Flow<()> {
-    let value = s.icanbenull?;
+    let value = s.0?;
     println!(
         "If you see this, then ptr is not null and the value is {}",
         *value
     );
 
-    let out = inner(Ptr::from(Box::new(true)))?;
+    let out = inner(Ptr::null())?;
 
     println!("After inner call: {out}");
 
     Flow::Done(())
 }
 
-fn inner(other: PtrStatic<bool>) -> Flow<bool> {
+fn inner(other: Ptr<bool>) -> Flow<bool> {
     let value = *other?;
     println!("If you see this, then other is: {value}");
 
