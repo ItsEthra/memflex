@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
 enum ByteMatch {
     Exact(u8),
     Any,
@@ -32,7 +32,7 @@ const fn single(c: char) -> u8 {
 }
 
 /// Represents a sequence of bytes to match against.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Pattern<const N: usize>([ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
     /// Checks if pattern matches byte slice
