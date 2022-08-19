@@ -12,6 +12,7 @@ use core::{ops::RangeInclusive, slice::from_raw_parts};
 /// assert_eq!(terminated_array(items.as_ptr(), 0), &[b'1', b'2', b'3'])
 /// # }
 /// ```
+#[inline]
 pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -> &'a [T] {
     let mut len = 0;
     while *first != last {
@@ -33,6 +34,7 @@ pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -
 /// assert_eq!(terminated_array(items.as_ptr(), 0), &[b'1', b'2', b'3'])
 /// # }
 /// ```
+#[inline]
 pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T) -> &'a mut [T] {
     let mut len = 0;
     while *first != last {
@@ -47,6 +49,7 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// # Safety
 /// * `start` is a valid pointer and can be read
 /// * Memory from `start` to `start + len` (inclusive) can be read
+#[inline]
 pub unsafe fn pattern_search<const N: usize>(
     pat: Pattern<N>,
     start: *const u8,
@@ -67,6 +70,7 @@ pub unsafe fn pattern_search<const N: usize>(
 /// Searches for a pattern internally in a given range
 /// # Safety
 /// * Range represents a chunk of memory that can be read.
+#[inline]
 pub unsafe fn pattern_search_range<const N: usize>(
     pat: Pattern<N>,
     range: RangeInclusive<usize>,
@@ -78,6 +82,7 @@ pub unsafe fn pattern_search_range<const N: usize>(
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (case insensetive).
 #[cfg(all(windows, feature = "alloc"))]
+#[inline]
 pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
     use crate::types::{Teb, ModuleBasicInfo};
 
@@ -104,6 +109,7 @@ pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> 
 /// # Encoding
 /// This function works **ONLY** with ASCII charactrs. If module contains non ASCII characters it will be skipped
 #[cfg(all(windows, not(feature = "alloc")))]
+#[inline]
 pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
     use crate::types::{ModuleBasicInfo, Teb};
 

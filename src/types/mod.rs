@@ -16,24 +16,26 @@ pub use win::*;
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct CStr {
-    /// Pointer to string data
-    pub ptr: NonNull<i8>,
+    ptr: NonNull<i8>,
 }
 
 impl CStr {
     /// Creates new [`CStr`].
+    #[inline]
     pub fn from_ptr(ptr: NonNull<i8>) -> Self {
         Self { ptr }
     }
 
-    /// Converts [`CStr`] into raw pointer..
-    pub fn into_ptr(self) -> *const i8 {
+    /// Converts [`CStr`] to raw pointer.
+    #[inline]
+    pub fn as_ptr(&self) -> *const i8 {
         self.ptr.as_ptr() as _
     }
 
     /// Converts [`CStr`] to string slice.
     /// # Safety
     /// * [`CStr`] must point to a valid UTF-8 sequence.
+    #[inline]
     pub unsafe fn as_str<'a>(&self) -> &'a str {
         core::str::from_utf8_unchecked(terminated_array::<u8>(self.ptr.as_ptr() as _, 0))
     }
@@ -41,8 +43,25 @@ impl CStr {
     /// Converts [`CStr`] into signed byte slice.
     /// # Safety
     /// * [`CStr`] must be a valid pointer.
+    #[inline]
     pub unsafe fn as_slice<'a>(&self) -> &'a [i8] {
         terminated_array(self.ptr.as_ptr() as _, 0)
+    }
+
+    /// Counts the number of bytes in a string
+    /// # Safety
+    /// * [`CStr`] must be a valid pointer.
+    #[inline]
+    pub unsafe fn len(&self) -> usize {
+        terminated_array(self.ptr.as_ptr(), 0).len()
+    }
+
+    /// Checks if the string is empty
+    /// # Safety
+    /// * [`CStr`] must be a valid pointer.
+    #[inline]
+    pub unsafe fn is_empty(&self) -> bool {
+        *self.ptr.as_ptr() == 0
     }
 }
 

@@ -22,6 +22,12 @@ impl UnicodeString {
         self.length as usize / size_of::<u16>()
     }
 
+    /// Checks if the string is empty
+    #[inline]
+    pub const fn is_empty(&self) -> bool {
+        self.length == 0
+    }
+
     /// Returns the length in bytes of the string,
     /// although it returns [`usize`], maximum value for it is `u16::MAX`.
     #[inline]
@@ -61,16 +67,28 @@ impl UnicodeString {
     /// Checks if string contains only characters that can be represented with ASCII
     /// # Safety
     /// * [`UnicodeString`] must be a valid pointer
+    #[inline]
     pub unsafe fn is_ascii(&self) -> bool {
         self.as_slice().iter().all(|b| *b < 128)
     }
 
     /// Creates an iterator over all string character if they are ascii.
+    /// # Safety
+    /// * [`UnicodeString`] must be a valid pointer
     /// # Panics
     /// * If string contains non-ascii characters.
+    #[inline]
     pub unsafe fn ascii(&self) -> impl Iterator<Item = char> {
         assert!(self.is_ascii());
 
         self.as_slice().iter().map(|b| *b as u8 as char)
+    }
+
+    /// Creates an iterator over valid UTF-16 string characters, invalid characters are skipped
+    /// # Safety
+    /// * [`UnicodeString`] must be a valid pointer
+    #[inline]
+    pub unsafe fn utf16(&self) -> impl Iterator<Item = char> {
+        char::decode_utf16(self.as_slice().iter().cloned()).flatten()
     }
 }
