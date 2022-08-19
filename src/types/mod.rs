@@ -1,6 +1,11 @@
 use crate::internal::terminated_array;
 use core::ptr::NonNull;
 
+#[cfg(windows)]
+mod unicode;
+#[cfg(windows)]
+pub use unicode::*;
+
 /// **Non null** C-Like zero terminated string
 /// # Safety
 /// This macro expects a non null ptr. So if you are not sure if that's the case
