@@ -1,5 +1,5 @@
-use core::{ops::RangeInclusive, slice::from_raw_parts};
 use crate::pattern::Pattern;
+use core::{ops::RangeInclusive, slice::from_raw_parts};
 
 /// # Safety
 /// * `first` - a valid pointer.
@@ -50,7 +50,7 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// * `start` is a valid pointer and can be read
 /// * Memory from `start` to `start + len` (inclusive) can be read
 #[inline]
-pub unsafe fn pattern_search<const N: usize>(
+pub unsafe fn find_pattern<const N: usize>(
     pat: Pattern<N>,
     start: *const u8,
     len: usize,
@@ -71,30 +71,30 @@ pub unsafe fn pattern_search<const N: usize>(
 /// # Safety
 /// * Range represents a chunk of memory that can be read.
 #[inline]
-pub unsafe fn pattern_search_range<const N: usize>(
+pub unsafe fn find_pattern_range<const N: usize>(
     pat: Pattern<N>,
     range: RangeInclusive<usize>,
 ) -> impl Iterator<Item = *const u8> {
-    pattern_search(pat, *range.start() as _, *range.end() - *range.start())
+    find_pattern(pat, *range.start() as _, *range.end() - *range.start())
 }
 
 /// Searches for module's base address by its name.
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
 #[cfg(windows)]
-pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
-    use crate::types::{Teb, ModuleBasicInfo};
+pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicInfo> {
+    use crate::types::{ModuleBasicInfo, Teb};
 
     Teb::current()
         .peb
         .ldr
         .iter()
-        .filter(|e| e.base_dll_name.len() == name.len())
+        .filter(|e| e.base_dll_name.len() == mod_name.len())
         .find_map(|e| {
             if unsafe {
                 e.base_dll_name
                     .utf16()
-                    .zip(name.chars())
+                    .zip(mod_name.chars())
                     .all(|(a, b)| a.eq_ignore_ascii_case(&b))
             } {
                 Some(ModuleBasicInfo {
@@ -107,12 +107,23 @@ pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> 
         })
 }
 
-/// Returns an iterator over all modules in the current process
+/// Searches for a pattern in the specified module.
+#[cfg(windows)]
+pub fn find_pattern_in_module<const N: usize>(
+    pat: Pattern<N>,
+    mod_name: &str,
+) -> Option<*const u8> {
+    let module = find_module_by_name(mod_name)?;
+
+    unsafe { find_pattern(pat, module.base, module.size).next() }
+}
+
+/// Returns an iterator over all modules in the current process.
 /// # Panics
 /// If any module's name or path contain invalid UTF-16 sequence
 #[cfg(all(windows, feature = "alloc"))]
 pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
-    use crate::types::{Teb, ModuleAdvancedInfo};
+    use crate::types::{ModuleAdvancedInfo, Teb};
 
     Teb::current().peb.ldr.iter().map(|e| unsafe {
         ModuleAdvancedInfo {
