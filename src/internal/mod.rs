@@ -75,16 +75,23 @@ pub unsafe fn pattern_search_range<const N: usize>(
 }
 
 /// Searches for module's base address by its name.
+/// # Behavior
+/// Function iteraters over ldr searches for module entry (case insensetive).
 #[cfg(all(windows, feature = "alloc"))]
-pub fn find_module_by_name(name: &str) -> Option<*const u8> {
-    use crate::types::Teb;
+pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
+    use crate::types::{Teb, ModuleBasicInfo};
+
+    let lc_name = name.to_lowercase();
 
     Teb::current().peb.ldr.iter().find_map(|e| {
         if unsafe { e.base_dll_name.to_string() }
-            .map(|s| s == name)
+            .map(|s| s.to_lowercase() == lc_name)
             .unwrap_or_default()
         {
-            Some(e.dll_base)
+            Some(ModuleBasicInfo {
+                size: e.image_size as usize,
+                base: e.dll_base,
+            })
         } else {
             None
         }

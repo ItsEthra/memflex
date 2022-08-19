@@ -51,3 +51,11 @@ impl Debug for CStr {
         unsafe { write!(f, "{:?}", self.as_str()) }
     }
 }
+
+/// Basic information about module
+pub struct ModuleBasicInfo {
+    /// Module's base
+    pub base: *const u8,
+    /// Module's size
+    pub size: usize,
+}
