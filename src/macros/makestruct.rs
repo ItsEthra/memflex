@@ -70,6 +70,7 @@ macro_rules! makestruct {
     } => {
         $(
             $( #[$($outter)*] )*
+            #[repr(C)]
             $vs struct $sname {
                 $($pvis parent: $sparent,)?
                 $(

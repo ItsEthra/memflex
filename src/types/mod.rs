@@ -1,5 +1,5 @@
 use crate::internal::terminated_array;
-use core::ptr::NonNull;
+use core::{ptr::NonNull, fmt::{Debug, self}};
 
 #[cfg(windows)]
 mod win;
@@ -42,5 +42,11 @@ impl CStr {
     /// * [`CStr`] must be a valid pointer.
     pub unsafe fn as_slice<'a>(&self) -> &'a [i8] {
         terminated_array(self.ptr.as_ptr() as _, 0)
+    }
+}
+
+impl Debug for CStr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        unsafe { write!(f, "{:?}", self.as_str()) }
     }
 }

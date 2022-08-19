@@ -11,3 +11,6 @@ default = ["std", "internal"]
 std = ["alloc"]
 alloc = []
 internal = []
+
+[dependencies]
+memoffset = "0.6"
