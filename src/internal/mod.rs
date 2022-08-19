@@ -34,9 +34,9 @@ pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicIn
 pub fn find_pattern_in_module<const N: usize>(
     pat: Pattern<N>,
     mod_name: &str,
-) -> Option<*const u8> {
+) -> Option<impl Iterator<Item = *const u8>> {
     let module = find_module_by_name(mod_name)?;
-    unsafe { crate::find_pattern(pat, module.base, module.size).next() }
+    unsafe { Some(crate::find_pattern(pat, module.base, module.size)) }
 }
 
 /// Returns an iterator over all modules in the current process.

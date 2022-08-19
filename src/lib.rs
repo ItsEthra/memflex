@@ -1,4 +1,4 @@
-//! Memflex - Memory hacking library for Rust
+#![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
 #![cfg_attr(feature = "nightly", feature(try_trait_v2))]
 #![cfg_attr(not(feature = "std"), no_std)]

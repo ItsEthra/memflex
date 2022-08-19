@@ -71,7 +71,7 @@ impl<const N: usize> Pattern<N> {
     /// # use memflex::{ida_pat, peid_pat} ;
     /// // They are actually constant calls so all transformations happen at compile time
     /// let ida = ida_pat!("13 ? D1");
-    /// let peid = ida_pat!("13 ? D1");
+    /// let peid = peid_pat!("13 ?? D1");
     /// let data = b"\x13\x01\xD1";
     /// assert!(ida.matches(data));
     /// assert!(peid.matches(data));

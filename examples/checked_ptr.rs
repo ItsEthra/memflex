@@ -4,7 +4,9 @@ use memflex::Ptr;
 #[cfg(feature = "nightly")]
 fn main() {
     let val = 5;
-    let s = nightly::StructWithPtr(Ptr::new(&val));
+    let s = nightly::StructWithPtr {
+        thiscanbenull: Ptr::new(&val)
+    };
     nightly::sub(s);
 }
 
@@ -17,20 +19,22 @@ fn main() {
 mod nightly {
     use memflex::{Flow, Ptr};
 
-    pub struct StructWithPtr<'a>(pub Ptr<'a, u32>);
+    pub struct StructWithPtr<'a> {
+        pub thiscanbenull: Ptr<'a, u32>
+    }
     
     pub fn sub(s: StructWithPtr) -> Flow<()> {
-        let value = s.0?;
+        let value = s.thiscanbenull?;
+
         println!(
             "If you see this, then ptr is not null and the value is {}",
             *value
         );
     
-        let out = inner(Ptr::null())?;
-    
+        let out = inner(Ptr::from(Box::new(true)))?;
         println!("After inner call: {out}");
     
-        Flow::Done(())
+        Flow::Null
     }
     
     fn inner(other: Ptr<bool>) -> Flow<bool> {
