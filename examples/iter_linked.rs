@@ -29,9 +29,8 @@ memflex::makestruct! {
 }
 
 #[cfg(windows)]
-#[test]
-fn test_linked() {
-    use memflex::types::DoublyLinkedListIter;
+fn main() {
+    use memflex::iter_list;
 
     unsafe {
         #[link(name = "ntdll")]
@@ -40,11 +39,14 @@ fn test_linked() {
         }
 
         let ldr = NtCurrentTeb().peb.ldr;
-        println!("{ldr:p}");
-            
-        for e in DoublyLinkedListIter::<LdrDataTableEntry, 0x10>::new(&ldr.in_memory_order_list) {
+        for e in iter_list!(&ldr.in_memory_order_list, LdrDataTableEntry, in_memory_order_links) {
             println!("{}", e.base_dll_name.to_string().unwrap());
         }
         loop {}
     }
+}
+
+#[cfg(not(windows))]
+fn main() {
+    panic!("This example can only run on windows");
 }

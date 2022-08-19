@@ -17,24 +17,26 @@ impl<T> Clone for ListEntry<T> {
 impl<T> Copy for ListEntry<T> { }
 
 /// Iterator over links of doubly linked list.
-pub struct DoublyLinkedListIter<'a, T, const F: usize> {
+pub struct DoublyLinkedListIter<'a, T> {
     head: &'a ListEntry<T>,
     current: ListEntry<T>,
-    start: bool
+    start: bool,
+    offset: usize
 }
 
-impl<'a, T, const F: usize> DoublyLinkedListIter<'a, T, F> {
+impl<'a, T> DoublyLinkedListIter<'a, T> {
     /// Creates new iterator over doubly linked list.
-    pub fn new(head: &'a ListEntry<T>) -> Self {
+    pub fn new(head: &'a ListEntry<T>, offset: usize) -> Self {
         Self {
             head,
             current: *head,
             start: false,
+            offset,
         }
     }
 }
 
-impl<'a, T, const F: usize> Iterator for DoublyLinkedListIter<'a, T, F> {
+impl<'a, T> Iterator for DoublyLinkedListIter<'a, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -47,7 +49,7 @@ impl<'a, T, const F: usize> Iterator for DoublyLinkedListIter<'a, T, F> {
                     let item = self.current.next?
                         .as_ptr()
                         .cast::<u8>()
-                        .sub(F)
+                        .sub(self.offset)
                         .cast::<T>()
                         .read();
                     self.current = next;
@@ -59,10 +61,18 @@ impl<'a, T, const F: usize> Iterator for DoublyLinkedListIter<'a, T, F> {
                 Some(self.head.next?
                     .as_ptr()
                     .cast::<u8>()
-                    .sub(F)
+                    .sub(self.offset)
                     .cast::<T>()
                     .read())
             }
         }
     }
+}
+
+/// Handy macro to easily create iterator over doubly linked list
+#[macro_export]
+macro_rules! iter_list {
+    ($head:expr, $entry:ty, $field:ident) => {
+        $crate::types::DoublyLinkedListIter::new($head, $crate::memoffset::offset_of!($entry, $field))
+    };
 }
