@@ -1,19 +1,26 @@
 #![allow(missing_docs)]
 
-pub const PROCESS_SYNCHRONIZE: u32 = 0x00100000;
-pub const PROCESS_VM_WRITE: u32 = 0x0020;
-pub const PROCESS_VM_READ: u32 = 0x0010;
-pub const PROCESS_VM_OPERATION: u32 = 0x0008;
-pub const PROCESS_TERMINATE: u32 = 0x0001;
-pub const PROCESS_SUSPEND_RESUME: u32 = 0x0800;
-pub const PROCESS_SET_QUOTA: u32 = 0x0100;
-pub const PROCESS_SET_INFORMATION: u32 = 0x0200;
-pub const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
-pub const PROCESS_QUERY_INFORMATION: u32 = 0x0400;
-pub const PROCESS_DUP_HANDLE: u32 = 0x0040;
-pub const PROCESS_CREATE_THREAD: u32 = 0x0002;
-pub const PROCESS_CREATE_PROCESS: u32 = 0x0080;
-pub const PROCESS_ALL_ACCESS: u32 = 0x000F0000 | 0x00100000 | 0xFFFF;
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+/// Access flags, used to describe access to the process
+pub struct ProcessAccess(pub u32);
+
+impl ProcessAccess {
+    pub const PROCESS_SYNCHRONIZE: Self = Self(0x00100000);
+    pub const PROCESS_VM_WRITE: Self = Self(0x0020);
+    pub const PROCESS_VM_READ: Self = Self(0x0010);
+    pub const PROCESS_VM_OPERATION: Self = Self(0x0008);
+    pub const PROCESS_TERMINATE: Self = Self(0x0001);
+    pub const PROCESS_SUSPEND_RESUME: Self = Self(0x0800);
+    pub const PROCESS_SET_QUOTA: Self = Self(0x0100);
+    pub const PROCESS_SET_INFORMATION: Self = Self(0x0200);
+    pub const PROCESS_QUERY_LIMITED_INFORMATION: Self = Self(0x1000);
+    pub const PROCESS_QUERY_INFORMATION: Self = Self(0x0400);
+    pub const PROCESS_DUP_HANDLE: Self = Self(0x0040);
+    pub const PROCESS_CREATE_THREAD: Self = Self(0x0002);
+    pub const PROCESS_CREATE_PROCESS: Self = Self(0x0080);
+    pub const PROCESS_ALL_ACCESS: Self = Self(0x000F0000 | 0x00100000 | 0xFFFF);
+}
 
 /// Protection flags, usually used to describe memory
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

@@ -1,6 +1,6 @@
 use crate::{
     external::{Handle, NtResult},
-    MfError, types::ProtectionFlags,
+    MfError, types::{ProtectionFlags, ProcessAccess},
 };
 use core::mem::{size_of, zeroed};
 
@@ -30,7 +30,7 @@ extern "C" {
         old: &mut ProtectionFlags
     ) -> NtResult;
 
-    fn OpenProcess(access: u32, inherit: i32, id: u32) -> Handle;
+    fn OpenProcess(access: ProcessAccess, inherit: i32, id: u32) -> Handle;
 }
 
 /// Owned handle to another process
@@ -53,7 +53,7 @@ impl OwnedProcess {
     }
 
     /// Opens process by its id.
-    pub fn open_by_id(id: u32, inherit_handle: bool, access_rights: u32) -> crate::Result<Self> {
+    pub fn open_by_id(id: u32, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<Self> {
         unsafe {
             let h = OpenProcess(access_rights, inherit_handle as i32, id);
             if h.is_invalid() {
