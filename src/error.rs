@@ -1,9 +1,13 @@
+use core::fmt::{Display, self};
+
 /// Global error type
 #[derive(Debug)]
 pub enum MfError {
     /// Nt error code
     #[cfg(windows)]
     NtStatus(u32),
+    /// Specified process was not found
+    ProcessNotFound,
 }
 
 impl MfError {
@@ -15,6 +19,12 @@ impl MfError {
         }
 
         Err(MfError::NtStatus(unsafe { GetLastError() }))
+    }
+}
+
+impl Display for MfError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

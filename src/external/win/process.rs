@@ -1,5 +1,6 @@
 use crate::{
     external::{Handle, NtResult},
+    terminated_array,
     types::{AllocationType, FreeType, MemoryProtection, ProcessAccess},
     MfError,
 };
@@ -41,6 +42,10 @@ extern "C" {
 
     fn VirtualFreeEx(hnd: isize, addr: usize, size: usize, free_ty: FreeType) -> NtResult;
 
+    fn CreateToolhelp32Snapshot(flags: i32, pid: u32) -> Handle;
+    fn Process32FirstW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
+    fn Process32NextW(hnd: isize, lppe: &mut FfiProcessEntry) -> bool;
+
     fn OpenProcess(access: ProcessAccess, inherit: i32, id: u32) -> Handle;
 }
 
@@ -61,22 +66,6 @@ impl OwnedProcess {
     /// Closes handle to the process.
     pub fn close(self) -> crate::Result<()> {
         self.into_handle().close()
-    }
-
-    /// Opens process by its id.
-    pub fn open_by_id(
-        id: u32,
-        inherit_handle: bool,
-        access_rights: ProcessAccess,
-    ) -> crate::Result<Self> {
-        unsafe {
-            let h = OpenProcess(access_rights, inherit_handle as i32, id);
-            if h.is_invalid() {
-                MfError::last()
-            } else {
-                Ok(Self(h))
-            }
-        }
     }
 
     /// Reads process memory, returns amount of bytes read.
@@ -185,5 +174,119 @@ impl OwnedProcess {
     /// If `free_type` is `MEM_RELEASE` then `size` must be 0.
     pub fn free(&self, address: usize, size: usize, free_type: FreeType) -> crate::Result<()> {
         unsafe { VirtualFreeEx(self.0 .0, address, size, free_type).expect_nonzero(()) }
+    }
+}
+
+#[repr(C)]
+struct FfiProcessEntry {
+    size: u32,
+    usage: u32,
+    pid: u32,
+    heap_id: usize,
+    mod_id: u32,
+    cnt_threads: u32,
+    parent: u32,
+    pri_class: i32,
+    flags: u32,
+    file_path: [u16; 260],
+}
+
+/// Iterator over all processes in the system.
+pub struct ProcessIterator {
+    h: Handle,
+    entry: FfiProcessEntry,
+    stop: bool,
+}
+
+impl ProcessIterator {
+    /// Creates new iterator over processes.
+    pub fn new() -> crate::Result<Self> {
+        unsafe {
+            let h = CreateToolhelp32Snapshot(0x00000002, 0);
+            if h.is_invalid() {
+                return MfError::last();
+            }
+
+            let mut this = Self {
+                h,
+                entry: zeroed(),
+                stop: false,
+            };
+            this.entry.size = size_of::<FfiProcessEntry>() as u32;
+            if Process32FirstW(this.h.0, &mut this.entry) {
+                Ok(this)
+            } else {
+                MfError::last()
+            }
+        }
+    }
+}
+
+impl Iterator for ProcessIterator {
+    type Item = ProcessEntry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stop {
+            return None;
+        }
+
+        let current = ProcessEntry::from(&self.entry);
+        unsafe {
+            self.stop = !Process32NextW(self.h.0, &mut self.entry);
+        }
+        Some(current)
+    }
+}
+
+/// ProcessEntry contains information about process running in system
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub struct ProcessEntry {
+    pub id: u32,
+    pub parent_id: u32,
+    pub default_heap: usize,
+    pub thread_count: u32,
+    pub path: String,
+}
+
+impl ProcessEntry {
+    /// Opens process by the entry's process id.
+    pub fn open(&self, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+        open_process_by_id(self.id, inherit_handle, access_rights)
+    }
+}
+
+impl From<&FfiProcessEntry> for ProcessEntry {
+    fn from(e: &FfiProcessEntry) -> Self {
+        Self {
+            id: e.pid,
+            parent_id: e.parent,
+            default_heap: e.heap_id,
+            thread_count: e.cnt_threads,
+            path: String::from_utf16_lossy(unsafe { terminated_array(e.file_path.as_ptr(), 0) }),
+        }
+    }
+}
+
+/// Tried to open process by name
+pub fn open_process_by_name(name: &str, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+    ProcessIterator::new()?
+        .find_map(|pe| if pe.path.eq_ignore_ascii_case(name) {
+            Some(pe.open(inherit_handle, access_rights))
+        } else {
+            None
+        })
+        .ok_or(MfError::ProcessNotFound)?
+}
+
+/// Tried to open process by id
+pub fn open_process_by_id(id: u32, inherit_handle: bool, access_rights: ProcessAccess) -> crate::Result<OwnedProcess> {
+    unsafe {
+        let h = OpenProcess(access_rights, inherit_handle as i32, id);
+        if h.is_invalid() {
+            MfError::last()
+        } else {
+            Ok(OwnedProcess(h))
+        }
     }
 }
