@@ -8,5 +8,6 @@ repository = "https://github.com/ItsEthra/memflex"
 
 [features]
 default = ["std", "internal"]
-std = []
+std = ["alloc"]
+alloc = []
 internal = []
