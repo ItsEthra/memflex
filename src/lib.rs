@@ -13,3 +13,6 @@ pub use global::*;
 #[cfg(feature = "internal")]
 /// Module with helper functions for internal memory access.
 pub mod internal;
+
+/// Useful types for interacting with C
+pub mod types;

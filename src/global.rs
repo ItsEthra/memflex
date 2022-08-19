@@ -30,11 +30,13 @@ impl<T> Global<T> {
     }
 
     /// Resolves global's offset
+    /// # Safety
+    /// * Refer to the safety of the resolver function
     #[inline]
-    pub fn resolve(&self) -> usize {
+    pub unsafe fn resolve(&self) -> usize {
         let mut addr = self.address.load(Ordering::Relaxed);
         if addr == 0 {
-            addr = unsafe { (self.resolver)(self.module, self.offset) };
+            addr = (self.resolver)(self.module, self.offset);
             self.address.store(addr, Ordering::Relaxed);
         }
 
@@ -58,5 +60,5 @@ impl<T> DerefMut for Global<T> {
 
 #[doc(hidden)]
 pub fn __default_resolver(_: &str, _: usize) -> usize {
-    0
+    todo!()
 }
