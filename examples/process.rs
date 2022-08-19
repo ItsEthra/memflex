@@ -1,8 +1,9 @@
-use memflex::external::OwnedProcess;
+use memflex::{external::OwnedProcess, types::{PROCESS_ALL_ACCESS, ProtectionFlags}};
 
 fn main() {
-    let p = OwnedProcess::open_by_id(13484, false, OwnedProcess::PROCESS_ALL_ACCESS)
+    let p = OwnedProcess::open_by_id(13484, false, PROCESS_ALL_ACCESS)
         .unwrap();
 
-    dbg!(p.write::<u64>(0x00000B417CFFAB0, 0xFFFFFFFF).unwrap());
+    dbg!(p.protect(0x0007FF7F016D53A, 0x10, ProtectionFlags::PAGE_EXECUTE_READWRITE).unwrap());
+    dbg!(p.write::<u64>(0x0007FF7F016D53A, 0x90).unwrap());
 }
