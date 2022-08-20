@@ -292,16 +292,12 @@ impl OwnedProcess {
 
     /// Suspends the process with `NtSuspendProcess`
     pub fn suspend(&self) -> crate::Result<()> {
-        unsafe {
-            NtSuspendProcess(self.0.0).expect_zero(())
-        }
+        unsafe { NtSuspendProcess(self.0 .0).expect_zero(()) }
     }
 
     /// Resumes the process with `NtResumeProcess`
     pub fn resume(&self) -> crate::Result<()> {
-        unsafe {
-            NtResumeProcess(self.0.0).expect_zero(())
-        }
+        unsafe { NtResumeProcess(self.0 .0).expect_zero(()) }
     }
 }
 

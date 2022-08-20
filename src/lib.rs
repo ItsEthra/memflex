@@ -32,3 +32,14 @@ pub mod external;
 
 mod error;
 pub use error::*;
+
+/// Puts int3 breakpoint
+#[macro_export]
+macro_rules! bp {
+    () => {
+        #[allow(unused_unsafe)]
+        unsafe {
+            core::arch::asm!("int3")
+        }
+    };
+}

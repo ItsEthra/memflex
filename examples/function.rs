@@ -4,7 +4,7 @@ pub fn actual_add(a: i32, b: i32) -> i32 {
 }
 
 memflex::function! {
-    fn ADDER(i32, i32) -> i32 = "function.exe"#0x1320;
+    fn ADDER(i32, i32) -> i32 = "function.exe"#0x13C0;
 }
 
 fn main() {

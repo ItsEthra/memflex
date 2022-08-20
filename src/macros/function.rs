@@ -1,7 +1,5 @@
-use core::marker::PhantomData;
-use core::mem::transmute;
-use core::ops::Deref;
-use core::sync::atomic::{AtomicBool, Ordering};
+use crate::cell::StaticCell;
+use core::{marker::PhantomData, mem::transmute, ops::Deref};
 
 /// Creates a function defenition with explicitly defined offset from module.
 /// ```
@@ -18,59 +16,34 @@ macro_rules! function {
     ) => {
         $(
             static $fname: $crate::Function< $(extern $($abi)?)? fn($($atype),*) $(-> $ret)?> = $crate::Function::new(
-                $crate::__resolver!( $($resolver)? ),
-                $modname,
-                $offset
+                || unsafe {
+                    ($crate::__resolver!( $($resolver)? ))($modname, $offset)
+                }
             );
         )*
     };
 }
 
-/// Internal function that can be called by its address
-pub struct Function<T> {
-    resolver: unsafe fn(&str, usize) -> usize,
-    module: &'static str,
-    offset: usize,
-    address: usize,
-    resolved: AtomicBool,
-
-    _ph: PhantomData<T>,
+#[doc(hidden)]
+pub struct Function<F> {
+    cell: StaticCell<usize, fn() -> usize>,
+    _ph: PhantomData<F>,
 }
 
-impl<T> Function<T> {
-    /// Creates new internal function that will resolve its address by module and offset on first access.
-    pub const fn new(
-        resolver: unsafe fn(&str, usize) -> usize,
-        module: &'static str,
-        offset: usize,
-    ) -> Self {
+impl<F> Function<F> {
+    #[doc(hidden)]
+    pub const fn new(init: fn() -> usize) -> Self {
         Self {
-            resolved: AtomicBool::new(false),
             _ph: PhantomData,
-            address: 0,
-            resolver,
-            module,
-            offset,
+            cell: StaticCell::new(init),
         }
-    }
-
-    #[inline]
-    unsafe fn resolve(&self) -> &usize {
-        if !self.resolved.load(Ordering::Relaxed) {
-            self.resolved.store(true, Ordering::Relaxed);
-            (&mut *(self as *const Self as *mut Self)).address =
-                (self.resolver)(self.module, self.offset);
-        }
-
-        &self.address
     }
 }
 
-impl<T> Deref for Function<T> {
-    type Target = T;
+impl<F> Deref for Function<F> {
+    type Target = F;
 
-    #[inline]
     fn deref(&self) -> &Self::Target {
-        unsafe { transmute(self.resolve()) }
+        unsafe { transmute(self.cell.value()) }
     }
 }

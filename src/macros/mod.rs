@@ -9,6 +9,8 @@ pub use strings::*;
 mod function;
 pub use function::*;
 
+pub(crate) mod cell;
+
 #[doc(hidden)]
 #[cfg(windows)]
 pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
