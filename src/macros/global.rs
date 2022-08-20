@@ -1,43 +1,23 @@
-use core::marker::PhantomData;
-use core::mem::transmute;
 use core::ops::{Deref, DerefMut};
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::marker::PhantomData;
+use crate::cell::StaticCell;
+use core::mem::transmute;
 
-/// Global variable that points to memory location.
+#[doc(hidden)]
 pub struct Global<T> {
-    resolver: unsafe fn(&str, usize) -> usize,
-    module: &'static str,
-    address: AtomicUsize,
-    offset: usize,
-
+    cell: StaticCell<usize, fn() -> usize>,
     _ph: PhantomData<T>,
 }
 
 impl<T> Global<T> {
-    /// Creates new global that will resolve its address by module and offset on first access.
+    #[doc(hidden)]
     pub const fn new(
-        resolver: unsafe fn(&str, usize) -> usize,
-        module: &'static str,
-        offset: usize,
+        init: fn() -> usize
     ) -> Self {
         Self {
-            address: AtomicUsize::new(0),
             _ph: PhantomData,
-            resolver,
-            module,
-            offset,
+            cell: StaticCell::new(init),
         }
-    }
-
-    #[inline]
-    unsafe fn resolve(&self) -> usize {
-        let mut addr = self.address.load(Ordering::Relaxed);
-        if addr == 0 {
-            addr = (self.resolver)(self.module, self.offset);
-            self.address.store(addr, Ordering::Relaxed);
-        }
-
-        addr
     }
 }
 
@@ -46,14 +26,14 @@ impl<T> Deref for Global<T> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        unsafe { transmute(self.resolve()) }
+        unsafe { transmute(*self.cell.value()) }
     }
 }
 
 impl<T> DerefMut for Global<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { transmute(self.resolve()) }
+        unsafe { transmute(*self.cell.value()) }
     }
 }
 
@@ -79,7 +59,9 @@ macro_rules! global {
         )*
     } => {
         $(
-            $vs static $gname: $crate::Global<$gtype> = $crate::Global::new($crate::__resolver!( $($resolver)? ), $modname, $offset);
+            $vs static $gname: $crate::Global<$gtype> = $crate::Global::new(
+                || unsafe { ($crate::__resolver!( $($resolver)? ))($modname, $offset) }
+            );
         )*
     };
 }

@@ -16,8 +16,6 @@ pub mod internal;
 /// Useful types for interacting with C
 pub mod types;
 
-pub use memoffset;
-
 mod memory;
 pub use memory::*;
 
@@ -43,3 +41,6 @@ macro_rules! bp {
         }
     };
 }
+
+pub use memoffset;
+pub use memoffset::offset_of;

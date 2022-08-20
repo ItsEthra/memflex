@@ -4,6 +4,7 @@ pub fn actual_add(a: i32, b: i32) -> i32 {
 }
 
 memflex::function! {
+    // Offset could change if you compile the example
     fn ADDER(i32, i32) -> i32 = "function.exe"#0x13C0;
 }
 
