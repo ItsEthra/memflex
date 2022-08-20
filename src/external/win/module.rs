@@ -1,5 +1,5 @@
-use super::CreateToolhelp32Snapshot;
-use crate::{external::Handle, terminated_array, MfError};
+use super::{CreateToolhelp32Snapshot, ProcessIterator, open_process_by_id, ThreadIterator};
+use crate::{external::Handle, terminated_array, MfError, types::ProcessRights};
 use core::mem::{size_of, zeroed};
 
 extern "C" {
@@ -94,4 +94,33 @@ impl Iterator for ModuleIterator {
         }
         Some(current)
     }
+}
+
+/// Helper function for iterating over processes
+/// # Panics
+/// If failed to create an iterator over processes. Refer to [`ProcessIterator::new`]
+pub fn processes() -> ProcessIterator {
+    ProcessIterator::new().unwrap()
+}
+
+/// Helper function for iterating over process's modules.
+/// # Panics
+/// * If failed to open the process. Refer to [`open_process_by_id`].
+/// * If failed to create iterator over process's modules. Refer to [`ModuleIterator::new`]
+pub fn modules(process_id: u32) -> ModuleIterator {
+    open_process_by_id(process_id, false, ProcessRights::QUERY_INFORMATION)
+        .expect("Faild to open the process")
+        .modules()
+        .expect("Faild to create an iterator over process's modules")
+}
+
+/// Helper function for iterating over process's threads.
+/// # Panics
+/// * If failed to open the process. Refer to [`open_process_by_id`].
+/// * If failed to create iterator over process's threads. Refer to [`ThreadIterator::new`]
+pub fn threads(process_id: u32) -> ThreadIterator {
+    open_process_by_id(process_id, false, ProcessRights::QUERY_INFORMATION)
+        .expect("Faild to open the process")
+        .threads()
+        .expect("Faild to create an iterator over process's modules")
 }

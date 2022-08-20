@@ -66,6 +66,12 @@ extern "C" {
     fn TerminateProcess(hnd: isize, code: u32) -> NtResult;
 }
 
+#[link(name = "ntdll")]
+extern "C" {
+    fn NtSuspendProcess(hnd: isize) -> NtResult;
+    fn NtResumeProcess(hnd: isize) -> NtResult;
+}
+
 /// Owned handle to another process
 pub struct OwnedProcess(Handle);
 
@@ -187,7 +193,7 @@ impl OwnedProcess {
     }
 
     /// Frees region of memory.
-    /// # Behavior
+    /// # Note
     /// If `free_type` is `MEM_RELEASE` then `size` must be 0.
     pub fn free(&self, address: usize, size: usize, free_type: FreeType) -> crate::Result<()> {
         unsafe { VirtualFreeEx(self.0 .0, address, size, free_type).expect_nonzero(()) }
@@ -282,6 +288,20 @@ impl OwnedProcess {
     /// Terminates the process with the specified code.
     pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
         unsafe { TerminateProcess(self.0 .0, exit_code).expect_nonzero(()) }
+    }
+
+    /// Suspends the process with `NtSuspendProcess`
+    pub fn suspend(&self) -> crate::Result<()> {
+        unsafe {
+            NtSuspendProcess(self.0.0).expect_zero(())
+        }
+    }
+
+    /// Resumes the process with `NtResumeProcess`
+    pub fn resume(&self) -> crate::Result<()> {
+        unsafe {
+            NtResumeProcess(self.0.0).expect_zero(())
+        }
     }
 }
 
