@@ -4,14 +4,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod macros;
+pub use macros::*;
 
 mod pattern;
 pub use pattern::*;
-
-#[cfg(feature = "internal")]
-mod global;
-#[cfg(feature = "internal")]
-pub use global::*;
 
 #[cfg(feature = "internal")]
 /// Module with helper functions for internal apis.
