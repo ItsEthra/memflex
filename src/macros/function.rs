@@ -26,7 +26,7 @@ macro_rules! function {
     };
 }
 
-/// Global variable that points to memory location.
+/// Internal function that can be called by its address
 pub struct Function<T> {
     resolver: unsafe fn(&str, usize) -> usize,
     module: &'static str,
@@ -38,7 +38,7 @@ pub struct Function<T> {
 }
 
 impl<T> Function<T> {
-    /// Creates new global that will resolve its address by module and offset on first access.
+    /// Creates new internal function that will resolve its address by module and offset on first access.
     pub const fn new(
         resolver: unsafe fn(&str, usize) -> usize,
         module: &'static str,
@@ -54,11 +54,8 @@ impl<T> Function<T> {
         }
     }
 
-    /// Resolves global's offset
-    /// # Safety
-    /// * Refer to the safety of the resolver function
     #[inline]
-    pub unsafe fn resolve(&self) -> &usize {
+    unsafe fn resolve(&self) -> &usize {
         if !self.resolved.load(Ordering::Relaxed) {
             self.resolved.store(true, Ordering::Relaxed);
             (&mut *(self as *const Self as *mut Self)).address =
@@ -72,6 +69,7 @@ impl<T> Function<T> {
 impl<T> Deref for Function<T> {
     type Target = T;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { transmute(self.resolve()) }
     }

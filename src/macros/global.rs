@@ -29,11 +29,8 @@ impl<T> Global<T> {
         }
     }
 
-    /// Resolves global's offset
-    /// # Safety
-    /// * Refer to the safety of the resolver function
     #[inline]
-    pub unsafe fn resolve(&self) -> usize {
+    unsafe fn resolve(&self) -> usize {
         let mut addr = self.address.load(Ordering::Relaxed);
         if addr == 0 {
             addr = (self.resolver)(self.module, self.offset);
@@ -47,12 +44,14 @@ impl<T> Global<T> {
 impl<T> Deref for Global<T> {
     type Target = T;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { transmute(self.resolve()) }
     }
 }
 
 impl<T> DerefMut for Global<T> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { transmute(self.resolve()) }
     }
