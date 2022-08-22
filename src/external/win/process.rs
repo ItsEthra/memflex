@@ -92,8 +92,10 @@ impl OwnedProcess {
     }
 
     /// Reads process memory, returns amount of bytes read.
-    pub fn read_buf(&self, address: usize, buf: &mut [u8]) -> crate::Result<usize> {
+    pub fn read_buf(&self, address: usize, mut buf: impl AsMut<[u8]>) -> crate::Result<usize> {
         let mut read = 0;
+        let buf = buf.as_mut();
+
         unsafe {
             ReadProcessMemory(
                 self.0 .0,
@@ -106,8 +108,8 @@ impl OwnedProcess {
         }
     }
 
-    /// Reads process memory, returning the value read at the address.
-    pub fn read<T: Clone>(&self, address: usize) -> crate::Result<T> {
+    /// Reads process memory, returning the value read at the `address`.
+    pub fn read<T>(&self, address: usize) -> crate::Result<T> {
         unsafe {
             let mut buf: T = zeroed();
 
@@ -122,11 +124,35 @@ impl OwnedProcess {
         }
     }
 
-    /// Writes buffer to the process memory, returning the amount of bytes written.
-    pub fn write_buf(&self, address: usize, buf: &[u8]) -> crate::Result<usize> {
-        unsafe {
-            let mut written: usize = 0;
+    /// Reads zero terminated string at `address`.
+    pub fn read_str(&self, address: usize) -> crate::Result<String> {
+        const BUF_SIZE: usize = 4;
 
+        let mut out = vec![];
+        let mut offset = 0;
+
+        loop {
+            let buf = self.read::<[u8; BUF_SIZE]>(address + offset)?;
+
+            if let Some(i) = buf.iter().position(|b| *b == 0) {
+                out.extend_from_slice(&buf[..i]);
+                break
+            } else {
+                out.extend_from_slice(&buf);
+            }
+            
+            offset += BUF_SIZE
+        }
+
+        Ok(String::from_utf8(out).map_err(|_| MfError::NotUtf8String)?)
+    }
+
+    /// Writes buffer to the process memory, returning the amount of bytes written.
+    pub fn write_buf(&self, address: usize, buf: impl AsRef<[u8]>) -> crate::Result<usize> {
+        let mut written: usize = 0;
+        let buf = buf.as_ref();
+
+        unsafe {
             WriteProcessMemory(
                 self.0 .0,
                 address,
@@ -139,10 +165,10 @@ impl OwnedProcess {
     }
 
     /// Writes value to the process memory, returning the amount of bytes written.
-    pub fn write<T: Clone>(&self, address: usize, value: T) -> crate::Result<usize> {
-        unsafe {
-            let mut written: usize = 0;
+    pub fn write<T>(&self, address: usize, value: T) -> crate::Result<usize> {
+        let mut written: usize = 0;
 
+        unsafe {
             WriteProcessMemory(
                 self.0 .0,
                 address,
@@ -152,6 +178,14 @@ impl OwnedProcess {
             )
             .expect_nonzero(written)
         }
+    }
+
+    /// Writes string to the specified address, putting 0 at the end
+    pub fn write_str(&self, address: usize, text: impl AsRef<str>) -> crate::Result<usize> {
+        let text = text.as_ref();
+        let mut wrote = self.write_buf(address, text.as_bytes())?;
+        wrote += self.write(address + wrote, 0)?;
+        Ok(wrote)
     }
 
     /// Changes the protection of memory pages, returning the old protection value.

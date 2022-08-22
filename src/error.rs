@@ -12,6 +12,8 @@ pub enum MfError {
     ModuleNotFound,
     /// No threads running in the process
     NoThreads,
+    /// String read was not valid UTF-8 byte sequence
+    NotUtf8String,
 }
 
 impl MfError {
