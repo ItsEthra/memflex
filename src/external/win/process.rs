@@ -292,7 +292,7 @@ impl OwnedProcess {
     ) -> impl Iterator<Item = usize> + 'a {
         
         let mut offset = 0;
-        let mut buf = vec![0; pat.len()];
+        let mut buf = vec![0; pat.size()];
 
         from_fn(move || {
             loop {

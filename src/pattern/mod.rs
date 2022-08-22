@@ -28,6 +28,20 @@ pub trait Matcher: sealed::Sealed {
     /// Matches byte sequence agains the pattern
     fn matches(&self, seq: &[u8]) -> bool;
 
-    /// Length of the pattern
-    fn len(&self) -> usize;
+    /// Size of the pattern
+    fn size(&self) -> usize;
+}
+
+impl<'a> sealed::Sealed for &'a [u8] { }
+
+impl<'a> Matcher for &'a [u8] {
+    fn matches(&self, seq: &[u8]) -> bool {
+        self.iter()
+            .zip(seq.iter())
+            .all(|(a, b)| a.eq(b))
+    }
+
+    fn size(&self) -> usize {
+        self.len()
+    }
 }

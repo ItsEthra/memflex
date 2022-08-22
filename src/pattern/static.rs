@@ -125,7 +125,7 @@ impl<const N: usize> Matcher for Pattern<N> {
         self.matches(seq)
     }
 
-    fn len(&self) -> usize {
+    fn size(&self) -> usize {
         N
     }
 }

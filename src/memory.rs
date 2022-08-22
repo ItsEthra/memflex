@@ -1,5 +1,5 @@
 use core::{ops::RangeInclusive, slice::from_raw_parts};
-use crate::Matcher;
+use crate::{Matcher, DynPattern};
 
 /// Creates an inmmutable slice from terminated array.
 /// # Safety
@@ -14,6 +14,8 @@ use crate::Matcher;
 /// ```
 #[inline]
 pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -> &'a [T] {
+    assert!(!first.is_null());
+
     let mut len = 0;
     while *first != last {
         len += 1;
@@ -36,6 +38,8 @@ pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -
 /// ```
 #[inline]
 pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T) -> &'a mut [T] {
+    assert!(!first.is_null());
+
     let mut len = 0;
     while *first != last {
         len += 1;
@@ -55,8 +59,10 @@ pub unsafe fn find_pattern(
     start: *const u8,
     len: usize,
 ) -> impl Iterator<Item = *const u8> {
+    assert!(!start.is_null());
+
     from_raw_parts::<u8>(start, len)
-        .windows(pat.len())
+        .windows(pat.size())
         .enumerate()
         .filter_map(move |(i, bytes)| {
             if pat.matches(bytes) {
@@ -76,4 +82,33 @@ pub unsafe fn find_pattern_range(
     range: RangeInclusive<usize>,
 ) -> impl Iterator<Item = *const u8> {
     find_pattern(pat, *range.start() as _, *range.end() - *range.start())
+}
+
+/// Creates a pattern for `target` address, making sure there are no exact matches in range from `start` to `start + len`.
+pub unsafe fn create_pattern(
+    target: *const u8,
+    start: *const u8,
+    len: usize,
+) -> Option<DynPattern>
+{
+    let mut size = 3;
+    
+    loop {
+        let pat = from_raw_parts(target, size);
+        if find_pattern(pat, start, len).count() > 0 {
+            size += 1;
+            continue;
+        }
+
+        break Some(DynPattern::from(pat))
+    }
+}
+
+/// Creates a pattern for `target` address, making sure there are no other exact matches in `range`.
+pub unsafe fn create_pattern_range(
+    target: *const u8,
+    range: RangeInclusive<usize>
+) -> Option<DynPattern>
+{
+    create_pattern(target, *range.start() as _, *range.end() - *range.start())
 }

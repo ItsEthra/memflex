@@ -21,6 +21,15 @@ impl<const N: usize> From<Pattern<N>> for DynPattern {
     }
 }
 
+impl<'a> From<&'a [u8]> for DynPattern {
+    fn from(slice: &'a [u8]) -> Self {
+        Self(slice
+            .iter()
+            .map(|b| ByteMatch::Exact(*b))
+            .collect())
+    }
+}
+
 impl sealed::Sealed for DynPattern { }
 
 impl Matcher for DynPattern {
@@ -28,7 +37,7 @@ impl Matcher for DynPattern {
         self.matches(seq)
     }
 
-    fn len(&self) -> usize {
+    fn size(&self) -> usize {
         self.0.len()
     }
 }

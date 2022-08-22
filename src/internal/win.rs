@@ -1,4 +1,4 @@
-use crate::pattern::Pattern;
+use crate::{Matcher, DynPattern};
 
 /// Searches for module's base address by its name.
 /// # Behavior
@@ -29,12 +29,21 @@ pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicIn
 }
 
 /// Searches for a pattern in the specified module.
-pub fn find_pattern_in_module<const N: usize>(
-    pat: Pattern<N>,
+pub fn find_pattern_in_module(
+    pat: impl Matcher,
     mod_name: &str,
 ) -> Option<impl Iterator<Item = *const u8>> {
     let module = find_module_by_name(mod_name)?;
     unsafe { Some(crate::find_pattern(pat, module.base, module.size)) }
+}
+
+/// Creates a pattern for `target`, making sure there there are no other exact matches in the specified module.
+pub fn create_pattern_in_module(
+    target: *const u8,
+    module_name: &str
+) -> Option<DynPattern> {
+    let module = find_module_by_name(module_name)?;
+    unsafe { crate::create_pattern(target, module.base, module.size) }
 }
 
 /// Returns an iterator over all modules in the current process.
