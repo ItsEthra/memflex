@@ -4,7 +4,7 @@ use crate::pattern::Pattern;
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
 pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicInfo> {
-    use crate::types::{ModuleBasicInfo, Teb};
+    use crate::types::{ModuleBasicInfo, win::Teb};
 
     Teb::current()
         .peb
@@ -42,7 +42,7 @@ pub fn find_pattern_in_module<const N: usize>(
 /// If any module's name or path contain invalid UTF-16 sequence
 #[cfg(feature = "alloc")]
 pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
-    use crate::types::{ModuleAdvancedInfo, Teb};
+    use crate::types::{ModuleAdvancedInfo, win::Teb};
 
     Teb::current().peb.ldr.iter().map(|e| unsafe {
         ModuleAdvancedInfo {

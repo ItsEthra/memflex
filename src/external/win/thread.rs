@@ -1,7 +1,7 @@
 use super::CreateToolhelp32Snapshot;
 use crate::{
     external::{Handle, NtResult},
-    types::ThreadRights,
+    types::win::ThreadRights,
     MfError,
 };
 use core::mem::{size_of, zeroed};

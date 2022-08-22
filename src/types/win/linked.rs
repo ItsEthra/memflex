@@ -81,7 +81,7 @@ impl<'a, T> Iterator for DoublyLinkedListIter<'a, T> {
 #[macro_export]
 macro_rules! iter_list {
     ($head:expr, $entry:ty, $field:ident) => {
-        $crate::types::DoublyLinkedListIter::new(
+        $crate::types::win::DoublyLinkedListIter::new(
             $head,
             $crate::memoffset::offset_of!($entry, $field),
         )

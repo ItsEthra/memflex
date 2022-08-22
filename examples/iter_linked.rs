@@ -2,7 +2,7 @@
 fn main() {
     use memflex::{
         iter_list,
-        types::{LdrDataTableEntry, Teb},
+        types::win::{LdrDataTableEntry, Teb},
     };
 
     unsafe {

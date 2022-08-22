@@ -1,5 +1,5 @@
 use super::{open_process_by_id, CreateToolhelp32Snapshot, ProcessIterator, ThreadIterator};
-use crate::{external::Handle, terminated_array, types::ProcessRights, MfError};
+use crate::{external::Handle, terminated_array, types::win::ProcessRights, MfError};
 use core::mem::{size_of, zeroed};
 
 extern "C" {

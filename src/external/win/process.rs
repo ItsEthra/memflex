@@ -2,7 +2,7 @@ use super::{ModuleEntry, ModuleIterator, OwnedThread, ThreadIterator};
 use crate::{
     external::{Handle, NtResult},
     terminated_array,
-    types::{AllocationType, FreeType, MemoryProtection, ProcessRights},
+    types::win::{AllocationType, FreeType, MemoryProtection, ProcessRights},
     MfError, Pattern,
 };
 use core::{

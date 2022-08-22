@@ -4,10 +4,9 @@ use core::{
     ptr::NonNull,
 };
 
+/// Windows datatypes
 #[cfg(windows)]
-mod win;
-#[cfg(windows)]
-pub use win::*;
+pub mod win;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -16,8 +15,9 @@ use alloc::string::String;
 
 /// **Non null** C-Like zero terminated string
 /// # Safety
-/// This macro expects a non null ptr. So if you are not sure if that's the case
+/// This struct expects a non null ptr. So if you are not sure if that's the case
 /// you may use [`Option<CStr>`] because this struct will benefit from non null optimizions.
+/// Has the same aliging and size as [`NonNull<i8>`]
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct CStr {
