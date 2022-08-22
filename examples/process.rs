@@ -1,19 +1,17 @@
-use memflex::{external::open_process_by_id, types::win::ProcessRights, ida_pat};
+use memflex::{external::open_process_by_name, types::win::ProcessRights};
 
 fn main() {
-    let p = open_process_by_id(
-        44612,
+    let p = open_process_by_name(
+        "Calculator.exe",
         false,
         ProcessRights::ALL_ACCESS
     ).unwrap();
 
-    let a = p.find_pattern_in_module(
-        ida_pat!("40 53 48 83 EC 20 8B"),
-        "tracelogging.dll"
-    )
-        .unwrap()
-        .next()
-        .unwrap();
+    let pat = p.create_pattern_in_module(
+        0x7FFE40CA1360, // 1360
+        "tracelogging.dll",
+        None
+    ).unwrap().unwrap();
 
-    println!("{:X}", a);
+    println!("{:}", pat.to_ida_style());
 }

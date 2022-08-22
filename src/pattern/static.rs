@@ -171,7 +171,7 @@ macro_rules! peid_pat {
     [
         $pat:expr
     ] => {
-        $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_peid_style($pat, true)
+        $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_peid_style($pat)
     };
 }
 

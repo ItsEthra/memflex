@@ -3,7 +3,7 @@ use crate::{
     external::{Handle, NtResult},
     terminated_array,
     types::win::{AllocationType, FreeType, MemoryProtection, ProcessRights},
-    MfError, Matcher,
+    MfError, Matcher, DynPattern,
 };
 use core::{
     iter::from_fn,
@@ -325,6 +325,56 @@ impl OwnedProcess {
     ) -> crate::Result<impl Iterator<Item = usize> + 'a> {
         let module = self.find_module(module_name)?;
         Ok(self.find_pattern(pat, module.base, module.size))
+    }
+
+    /// Creates a pattern for `target` making sure there are no other matches in range from `start` to `start + len`.
+/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
+    pub fn create_pattern(
+        &self,
+        target: usize,
+        start: usize,
+        len: usize,
+        max: Option<usize>,
+    ) -> crate::Result<Option<DynPattern>> {
+
+        let mut size = 3;
+        let mut offset = 0;
+
+        loop {
+            let mut pat = vec![0; size];
+            self.read_buf(target, &mut pat[..])?;
+
+            let mut done = true;
+            for oc in self.find_pattern(&pat[..], start + offset, len - offset) {
+                if oc != target {
+                    size += 1;
+                    offset = oc - start;
+                    done = false;
+
+                    if let Some(max) = max && size > max {
+                        return Ok(None);
+                    }
+
+                    break;
+                }
+            }
+
+            if done {
+                return Ok(Some(pat.as_slice().into()))
+            }
+        }
+    }
+
+    /// Creates a pattern for `target` making sure there are no other matches in the specified module.
+    /// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
+    pub fn create_pattern_in_module(
+        &self,
+        target: usize,
+        module_name: &str,
+        max: Option<usize>
+    ) -> crate::Result<Option<DynPattern>> {
+        let module = self.find_module(module_name)?;
+        Ok(self.create_pattern(target, module.base, module.size, max)?)
     }
 
     /// Terminates the process with the specified code.

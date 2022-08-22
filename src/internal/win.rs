@@ -3,19 +3,19 @@ use crate::{Matcher, DynPattern};
 /// Searches for module's base address by its name.
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
-pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicInfo> {
+pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasicInfo> {
     use crate::types::{ModuleBasicInfo, win::Teb};
 
     Teb::current()
         .peb
         .ldr
         .iter()
-        .filter(|e| e.base_dll_name.len() == mod_name.len())
+        .filter(|e| e.base_dll_name.len() == module_name.len())
         .find_map(|e| {
             if unsafe {
                 e.base_dll_name
                     .utf16()
-                    .zip(mod_name.chars())
+                    .zip(module_name.chars())
                     .all(|(a, b)| a.eq_ignore_ascii_case(&b))
             } {
                 Some(ModuleBasicInfo {
@@ -31,14 +31,14 @@ pub fn find_module_by_name(mod_name: &str) -> Option<crate::types::ModuleBasicIn
 /// Searches for a pattern in the specified module.
 pub fn find_pattern_in_module(
     pat: impl Matcher,
-    mod_name: &str,
+    module_name: &str,
 ) -> Option<impl Iterator<Item = *const u8>> {
-    let module = find_module_by_name(mod_name)?;
+    let module = find_module_by_name(module_name)?;
     unsafe { Some(crate::find_pattern(pat, module.base, module.size)) }
 }
 
 /// Creates a pattern for `target`, making sure there there are no other exact matches in the specified module.
-/// If `max` is set, function will abort if not possible to find pattern in less than `max` bytes.
+/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
 pub fn create_pattern_in_module(
     target: *const u8,
     module_name: &str,

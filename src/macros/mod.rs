@@ -77,7 +77,7 @@ pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
 
 #[doc(hidden)]
 #[cfg(not(windows))]
-pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
+pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
     todo!()
 }
 
