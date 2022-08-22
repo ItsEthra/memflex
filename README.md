@@ -117,6 +117,14 @@ memflex::global! {
     pub static MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
 }
 
+memflex::function! {
+    // Function with offset from the module
+    fn ADDER(i32, i32) -> i32 = "function.exe"#0x2790;
+
+    // Function with signature
+    fn MIXER(f32, f32, f32) -> u32 = "function.exe"%"48 81 EC B8 00 00 00 F3";
+}
+
 use memflex::types::CStr;
 let zero_terminated: CStr = memflex::cstr!("Hello, World!");
 ```

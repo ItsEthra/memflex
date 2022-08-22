@@ -43,7 +43,7 @@ const fn single(c: char) -> u8 {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Pattern<const N: usize>([ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
-    /// Checks if pattern matches byte slice
+    /// Checks if pattern matches byte slice.
     /// ```
     /// # use memflex::ida_pat;
     /// let data = b"\x11\x22\x33";
@@ -66,10 +66,10 @@ impl<const N: usize> Pattern<N> {
         true
     }
 
-    /// Creates pattern from IDA or PEID style string
+    /// Creates pattern from IDA or PEID style string.
     /// ```
     /// # use memflex::{ida_pat, peid_pat} ;
-    /// // They are actually constant calls so all transformations happen at compile time
+    /// // They are actually constant calls so all transformations happen at compile time.
     /// let ida = ida_pat!("13 ? D1");
     /// let peid = peid_pat!("13 ?? D1");
     /// let data = b"\x13\x01\xD1";
@@ -104,7 +104,7 @@ impl<const N: usize> Pattern<N> {
         Self(out)
     }
 
-    /// Creates pattern from code style strings
+    /// Creates pattern from code style strings.
     /// ```
     /// # use memflex::code_pat;
     /// let pat = code_pat!(b"\x11\x55\xE2", "x?x");
@@ -134,7 +134,7 @@ impl<const N: usize> Pattern<N> {
 /// Generates a pattern from IDA style string.
 /// ```
 /// # use memflex::ida_pat;
-/// // Pattern parsing is a contant call and happens at compile time
+/// // Pattern parsing is a contant call and happens at compile time.
 /// let pat = ida_pat!("13 ? D1");
 /// ```
 #[macro_export]
@@ -149,7 +149,7 @@ macro_rules! ida_pat {
 /// Generates a pattern from PEID style string.
 /// ```
 /// # use memflex::peid_pat;
-/// // Pattern parsing is a contant call and happens at compile time
+/// // Pattern parsing is a contant call and happens at compile time.
 /// let pat = peid_pat!("13 ?? D1");
 /// ```
 #[macro_export]
@@ -188,7 +188,7 @@ pub const fn __ida_peid_count(pat: &'static str, peid: bool) -> usize {
 /// Generates a pattern from code style strings.
 /// ```
 /// # use memflex::code_pat;
-/// // Pattern parsing is a contant call and happens at compile time
+/// // Pattern parsing is a contant call and happens at compile time.
 /// let pat = code_pat!(b"\x11\x55\xE2", "x?x");
 /// ```
 #[macro_export]

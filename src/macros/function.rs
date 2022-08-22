@@ -1,7 +1,7 @@
 use core::{marker::PhantomData, mem::transmute, ops::Deref};
 use crate::cell::StaticCell;
 
-/// Creates a function defenition with explicitly defined offset from module.
+/// Creates a function defenition with explicitly defined offset from module or signature.
 /// ```
 /// # use memflex::ResolveBy;
 /// fn get_address_in_module<const N: usize>(_: ResolveBy<N>) -> usize {
@@ -34,7 +34,7 @@ macro_rules! function {
     };
 }
 
-#[doc(hidden)]
+/// Function that resolve its address on the first access.
 pub struct Function<F> {
     cell: StaticCell<usize, fn() -> usize>,
     _ph: PhantomData<F>,
@@ -47,6 +47,11 @@ impl<F> Function<F> {
             _ph: PhantomData,
             cell: StaticCell::new(init),
         }
+    }
+
+    /// Force inits function
+    pub fn force(&self) {
+        self.cell.init();
     }
 }
 

@@ -15,6 +15,8 @@ fn main() {
     let v2 = ADDER(10, 15);
     assert_eq!(v1, v2);
 
+    // MIXER.force(); // - Not required, it will early resolve the signature
+
     let v1 = mix_three(1., 2., 3.);
     let v2 = MIXER(1., 2., 3.);
     assert_eq!(v1, v2);

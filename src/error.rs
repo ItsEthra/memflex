@@ -14,6 +14,16 @@ pub enum MfError {
     NoThreads,
     /// String read was not valid UTF-8 byte sequence
     NotUtf8String,
+    /// Value was null
+    #[cfg(feature = "nightly")]
+    Null
+}
+
+#[cfg(feature = "nightly")]
+impl crate::ptr::NullError for MfError {
+    fn null() -> Self {
+        Self::Null
+    }
 }
 
 impl MfError {
@@ -34,6 +44,9 @@ impl Display for MfError {
         write!(f, "{:?}", self)
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for MfError { }
 
 #[allow(missing_docs)]
 pub type Result<T> = std::result::Result<T, MfError>;

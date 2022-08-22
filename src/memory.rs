@@ -1,6 +1,7 @@
 use crate::pattern::Pattern;
 use core::{ops::RangeInclusive, slice::from_raw_parts};
 
+/// Creates an inmmutable slice from terminated array.
 /// # Safety
 /// * `first` - a valid pointer.
 /// * `last` - is contained within `usize::MAX` bytes away from `first`.
@@ -22,6 +23,7 @@ pub unsafe fn terminated_array<'a, T: PartialEq>(mut first: *const T, last: T) -
     core::slice::from_raw_parts(first.sub(len), len)
 }
 
+/// Creates a mutable slice from terminated array.
 /// # Safety
 /// * `first` - a valid pointer.
 /// * `last` - is contained within `usize::MAX` bytes away from `first`.
@@ -43,7 +45,7 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
     core::slice::from_raw_parts_mut(first.sub(len), len)
 }
 
-/// Searches for a pattern internally by start address and search length
+/// Searches for a pattern internally by start address and search length.
 /// # Safety
 /// * `start` is a valid pointer and can be read
 /// * Memory from `start` to `start + len` (inclusive) can be read
@@ -65,7 +67,7 @@ pub unsafe fn find_pattern<const N: usize>(
         })
 }
 
-/// Searches for a pattern internally in a given range
+/// Searches for a pattern internally in a given range.
 /// # Safety
 /// * Range represents a chunk of memory that can be read.
 #[inline]

@@ -15,14 +15,19 @@ impl<V, F: FnOnce() -> V + 'static + Send + Sync> StaticCell<V, F> {
         }
     }
 
+    #[inline]
+    pub fn init(&self) {
+        unsafe {
+            let this = &mut *(self as *const Self as *mut Self);
+            let v = core::ptr::read(&this.init);
+            this.value = Some(v());
+        }
+    }
+
+    #[inline]
     pub fn value(&self) -> &V {
         if !self.ready.load(Ordering::SeqCst) {
-            unsafe {
-                let this = &mut *(self as *const Self as *mut Self);
-                let v = core::ptr::read(&this.init);
-                this.value = Some(v());
-            }
-
+            self.init();
             self.ready.store(true, Ordering::SeqCst);
         }
 
