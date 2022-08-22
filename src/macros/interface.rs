@@ -11,7 +11,7 @@
 ///     pub trait IPlayer impl for ConcreteType {
 ///         // Notice missing `&self`, this is intentional and macro will implicitly add it.
 ///         // Functions without `&self` in interface doesn't make much sense.
-///         extern "C" fn get_health() -> i32 = 0; // 0 - Index of the virtual function.
+///         extern fn get_health() -> i32 = 0; // 0 - Index of the virtual function.
 ///         // *Returns old health*
 ///         extern "C" fn set_health(new: i32) -> i32 = 1; // 1 - Index of the virtual function.
 ///     }

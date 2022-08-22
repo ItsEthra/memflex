@@ -1,3 +1,5 @@
+use core::slice::from_raw_parts;
+
 /// Virtual method table pointer
 /// ```
 /// #[repr(C)]
@@ -40,11 +42,18 @@ pub struct VmtPtr {
 }
 
 impl VmtPtr {
-    /// Creates a slice of all functions in vmt.
+    /// Creates a slice of all functions in vmt until meets `0`.
     /// # Safety
     /// * `self` must be a valid pointer with at most `usize::MAX - 1` zero terminated elements.
-    pub unsafe fn dump(&self) -> &[usize] {
+    pub unsafe fn dump_terminated(&self) -> &[usize] {
         crate::terminated_array(self.vmt, 0)
+    }
+
+    /// Creates a slice of `count` functions in vmt.
+    /// # Safety
+    /// * `self` must be a valid pointer for a slice of `count` usize's.
+    pub unsafe fn dump(&self, count: usize) -> &[usize] {
+        from_raw_parts(self.vmt, count)
     }
 
     /// Returns a function pointer at index `N`.
