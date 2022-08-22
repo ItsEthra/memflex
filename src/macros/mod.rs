@@ -9,17 +9,70 @@ pub use strings::*;
 mod function;
 pub use function::*;
 
+use crate::Pattern;
+
 pub(crate) mod cell;
+
+/// How to resolve static offsets
+pub enum ResolveBy<const N: usize> {
+    /// By module name and offset
+    NameOffset {
+        /// Module name
+        module_name: &'static str,
+        /// Offset
+        offset: usize,
+    },
+    /// By module name and pattern
+    IdaPattern {
+        /// Module name
+        module_name: &'static str,
+        /// Ida pattern
+        pattern: Pattern<N>,
+    },
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __resolve_by {
+    (# $module:literal, $second:literal) => {
+        $crate::ResolveBy::<0>::NameOffset {
+            module_name: $module,
+            offset: $second
+        }
+    };
+    (% $module:literal, $second:literal) => {
+        $crate::ResolveBy::IdaPattern {
+            module_name: $module,
+            pattern: $crate::ida_pat!($second),
+        }
+    };
+}
 
 #[doc(hidden)]
 #[cfg(windows)]
-pub fn __default_resolver(mod_name: &str, offset: usize) -> usize {
-    use crate::internal::find_module_by_name;
+pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
+    use crate::internal::{find_module_by_name, find_pattern_in_module};
 
-    find_module_by_name(mod_name)
-        .expect("Module not found")
-        .base as usize
-        + offset
+    match res {
+        ResolveBy::NameOffset {
+            module_name,
+            offset,
+        } => {
+            find_module_by_name(module_name)
+                .expect("Module not found")
+                .base as usize
+                + offset
+        },
+        ResolveBy::IdaPattern {
+            module_name,
+            pattern,
+        } => {
+            find_pattern_in_module(pattern, module_name)
+                .unwrap()
+                .next()
+                .unwrap() as usize
+        },
+    }
 }
 
 #[doc(hidden)]
@@ -34,8 +87,8 @@ macro_rules! __resolver {
     () => {
         $crate::__default_resolver
     };
-    ($($tt:tt)*) => {
-        $($tt)*
+    ($item:path) => {
+        $item
     }
 }
 

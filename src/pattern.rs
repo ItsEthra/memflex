@@ -140,7 +140,7 @@ impl<const N: usize> Pattern<N> {
 #[macro_export]
 macro_rules! ida_pat {
     [
-        $pat:literal
+        $pat:expr
     ] => {
         $crate::Pattern::<{ $crate::__ida_peid_count($pat, false) }>::from_ida_peid_style($pat, false)
     };
@@ -155,7 +155,7 @@ macro_rules! ida_pat {
 #[macro_export]
 macro_rules! peid_pat {
     [
-        $pat:literal
+        $pat:expr
     ] => {
         $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_ida_peid_style($pat, true)
     };

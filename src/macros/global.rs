@@ -39,7 +39,8 @@ impl<T> DerefMut for Global<T> {
 
 /// Declares global variables with fixed offset from module
 /// ```
-/// fn get_address_in_module(module: &str, offset: usize) -> usize {
+/// # use memflex::ResolveBy;
+/// fn get_address_in_module<const N: usize>(_: ResolveBy<N>) -> usize {
 ///     todo!()
 /// }
 ///
@@ -55,12 +56,12 @@ impl<T> DerefMut for Global<T> {
 macro_rules! global {
     {
         $(
-            $vs:vis static $gname:ident: $gtype:ty = $( ($resolver:ident) )? $modname:literal $sep:tt $offset:expr;
+            $vs:vis static $gname:ident: $gtype:ty = $( ($resolver:ident) )? $module:literal $sep:tt $offset:expr;
         )*
     } => {
         $(
             $vs static $gname: $crate::Global<$gtype> = $crate::Global::new(
-                || unsafe { ($crate::__resolver!( $($resolver)? ))($modname, $offset) }
+                || unsafe { ($crate::__resolver!( $($resolver)? ))( $crate::__resolve_by!($sep $module, $offset) ) }
             );
         )*
     };
