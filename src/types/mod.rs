@@ -53,7 +53,7 @@ impl CStr {
         terminated_array(self.ptr.as_ptr() as _, 0)
     }
 
-    /// Counts the number of bytes in a string
+    /// Counts the number of bytes in a string.
     /// # Safety
     /// * [`CStr`] must be a valid pointer.
     #[inline]
@@ -61,7 +61,7 @@ impl CStr {
         terminated_array(self.ptr.as_ptr(), 0).len()
     }
 
-    /// Checks if the string is empty
+    /// Checks if the string is empty.
     /// # Safety
     /// * [`CStr`] must be a valid pointer.
     #[inline]

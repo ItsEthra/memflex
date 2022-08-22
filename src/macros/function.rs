@@ -1,17 +1,23 @@
-use crate::cell::StaticCell;
 use core::{marker::PhantomData, mem::transmute, ops::Deref};
+use crate::cell::StaticCell;
 
 /// Creates a function defenition with explicitly defined offset from module.
 /// ```
+/// fn get_address_in_module(_: &str, _: usize) -> usize {
+///     todo!()
+/// }
+/// 
 /// memflex::function! {
-///     extern "C" fn CALLE(i32, i32) -> i32 = "file.exe"#0x1122;
+///     extern fn CALLE(i32, i32) -> i32 = "file.exe"#0x1122;
+/// 
+///     extern fn OTHER_FN(f32, bool) -> u64 = (get_address_in_module)"file.exe"#0x1122;
 /// }
 /// ```
 #[macro_export]
 macro_rules! function {
     (
         $(
-            $(extern $($abi:literal)?)? fn $fname:ident( $($atype:ty),* ) $(-> $ret:ty)? = $($resolver:ident)? $modname:literal $sep:tt $offset:expr;
+            $(extern $($abi:literal)?)? fn $fname:ident( $($atype:ty),* ) $(-> $ret:ty)? = $( ($resolver:ident) )? $modname:literal $sep:tt $offset:expr;
         )*
     ) => {
         $(

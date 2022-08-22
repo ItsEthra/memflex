@@ -39,7 +39,7 @@ impl<T> DerefMut for Global<T> {
 
 /// Declares global variables with fixed offset from module
 /// ```
-/// fn get_module_by_address(module: &str, offset: usize) -> usize {
+/// fn get_address_in_module(module: &str, offset: usize) -> usize {
 ///     todo!()
 /// }
 ///
@@ -48,7 +48,7 @@ impl<T> DerefMut for Global<T> {
 ///     pub static MY_GLOBAL: i32 = "app.exe"#0xAABB;
 ///
 ///     // Or use another function to get offset
-///     pub static HEALTH: f32 = (get_module_by_address)"app.exe"#0xFFEE;
+///     pub static HEALTH: f32 = (get_address_in_module)"app.exe"#0xFFEE;
 /// }
 /// ```
 #[macro_export]
