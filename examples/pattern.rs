@@ -1,8 +1,11 @@
 use memflex::internal::create_pattern_in_module;
 
 fn main() {
-    let p = create_pattern_in_module(mix_three as usize as _, "pattern.exe", None);
-    dbg!(p.is_some());
+    let p = create_pattern_in_module(mix_three as usize as _, "pattern.exe", None)
+        .unwrap();
+    
+    let (pat, mask) = p.to_code_style();
+    println!("Found: {pat} {mask}");
 }
 
 fn mix_three(a: f32, b: f32, c: f32) -> u32 {

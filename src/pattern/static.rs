@@ -18,7 +18,7 @@ const fn single(c: char) -> u8 {
     }
 }
 
-/// Represents a sequence of bytes to match against.
+/// Represents a staticly built sequence of bytes to match against.
 /// ```
 /// # use memflex::{ida_pat, peid_pat, code_pat};
 /// let data = b"\x11\x22\x33";
@@ -53,16 +53,7 @@ impl<const N: usize> Pattern<N> {
         true
     }
 
-    /// Creates pattern from IDA or PEID style string.
-    /// ```
-    /// # use memflex::{ida_pat, peid_pat} ;
-    /// // They are actually constant calls so all transformations happen at compile time.
-    /// let ida = ida_pat!("13 ? D1");
-    /// let peid = peid_pat!("13 ?? D1");
-    /// let data = b"\x13\x01\xD1";
-    /// assert!(ida.matches(data));
-    /// assert!(peid.matches(data));
-    pub const fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
+    const fn from_ida_peid_style(pat: &'static str, peid: bool) -> Pattern<N> {
         let mut out = [ByteMatch::Any; N];
 
         let mut i = 0;
@@ -89,6 +80,30 @@ impl<const N: usize> Pattern<N> {
         }
 
         Self(out)
+    }
+
+    /// Creates pattern from IDA style string.
+    /// ```
+    /// # use memflex::{ida_pat, peid_pat} ;
+    /// // Pattern parsing is a contant call and happens at compile time.
+    /// let ida = ida_pat!("13 ? D1");
+    /// let data = b"\x13\x01\xD1";
+    /// assert!(ida.matches(data));
+    #[inline]
+    pub const fn from_ida_style(pat: &'static str) -> Pattern<N> {
+        Self::from_ida_peid_style(pat, false)
+    }
+
+    /// Creates pattern from PEID style string.
+    /// ```
+    /// # use memflex::{ida_pat, peid_pat} ;
+    /// // Pattern parsing is a contant call and happens at compile time.
+    /// let peid = peid_pat!("13 ?? D1");
+    /// let data = b"\x13\x01\xD1";
+    /// assert!(peid.matches(data));
+    #[inline]
+    pub const fn from_peid_style(pat: &'static str) -> Pattern<N> {
+        Self::from_ida_peid_style(pat, true)
     }
 
     /// Creates pattern from code style strings.
@@ -141,7 +156,7 @@ macro_rules! ida_pat {
     [
         $pat:expr
     ] => {
-        $crate::Pattern::<{ $crate::__ida_peid_count($pat, false) }>::from_ida_peid_style($pat, false)
+        $crate::Pattern::<{ $crate::__ida_peid_count($pat, false) }>::from_ida_style($pat)
     };
 }
 
@@ -156,7 +171,7 @@ macro_rules! peid_pat {
     [
         $pat:expr
     ] => {
-        $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_ida_peid_style($pat, true)
+        $crate::Pattern::<{ $crate::__ida_peid_count($pat, true) }>::from_peid_style($pat, true)
     };
 }
 

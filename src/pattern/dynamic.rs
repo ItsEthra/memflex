@@ -1,7 +1,7 @@
 use super::{ByteMatch, sealed};
 use crate::{Pattern, Matcher};
 
-/// Dynamic pattern. Same as [`crate::pattern::Pattern`] but requires allocating.
+/// Dynamic pattern. Same as [`crate::pattern::Pattern`] but requires allocating and can be build at runtime.
 pub struct DynPattern(pub(crate) Vec<ByteMatch>);
 
 impl DynPattern {
@@ -12,6 +12,38 @@ impl DynPattern {
             .iter()
             .zip(data.iter())
             .all(|(a, b)| a.matches(*b))
+    }
+
+    fn to_ida_peid_style(&self, peid: bool) -> String {
+        self.0
+            .iter()
+            .map(|m| match m {
+                ByteMatch::Exact(b) => format!("{b:02X}"),
+                ByteMatch::Any => if peid { "??" } else { "?" }.into(),
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    /// Converts pattern to IDA style string.
+    pub fn to_ida_style(&self) -> String {
+        self.to_ida_peid_style(false)
+    }
+
+    /// Converts pattern to PEID style string.
+    pub fn to_peid_style(&self) -> String {
+        self.to_ida_peid_style(true)
+    }
+
+    /// Converts pattern to code style string, returing pattern and mask.
+    pub fn to_code_style(&self) -> (String, String) {
+        self.0
+            .iter()
+            .map(|m| match m {
+                ByteMatch::Exact(b) => (format!("\\x{b:02X}"), "x"),
+                ByteMatch::Any => ("?".into(), "?"),
+            })
+            .unzip::<_, _, String, String>()
     }
 }
 
