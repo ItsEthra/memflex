@@ -38,12 +38,14 @@ pub fn find_pattern_in_module(
 }
 
 /// Creates a pattern for `target`, making sure there there are no other exact matches in the specified module.
+/// If `max` is set, function will abort if not possible to find pattern in less than `max` bytes.
 pub fn create_pattern_in_module(
     target: *const u8,
-    module_name: &str
+    module_name: &str,
+    max: Option<usize>,
 ) -> Option<DynPattern> {
     let module = find_module_by_name(module_name)?;
-    unsafe { crate::create_pattern(target, module.base, module.size) }
+    unsafe { crate::create_pattern(target, module.base, module.size, max) }
 }
 
 /// Returns an iterator over all modules in the current process.

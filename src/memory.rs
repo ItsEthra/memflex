@@ -85,10 +85,12 @@ pub unsafe fn find_pattern_range(
 }
 
 /// Creates a pattern for `target` address, making sure there are no exact matches in range from `start` to `start + len`.
+/// If `max` is set, function will abort if not possible to find pattern in less than `max` bytes.
 pub unsafe fn create_pattern(
     target: *const u8,
     start: *const u8,
     len: usize,
+    max: Option<usize>,
 ) -> Option<DynPattern>
 {
     let mut size = 3;
@@ -105,6 +107,11 @@ pub unsafe fn create_pattern(
         {
             size += 1;
             offset = i;
+
+            if let Some(max) = max && size > max {
+                return None;
+            }
+
             continue;
         }
 
@@ -113,10 +120,12 @@ pub unsafe fn create_pattern(
 }
 
 /// Creates a pattern for `target` address, making sure there are no other exact matches in `range`.
+/// If `max` is set, function will abort if not possible to find pattern in less than `max` bytes.
 pub unsafe fn create_pattern_range(
     target: *const u8,
-    range: RangeInclusive<usize>
+    range: RangeInclusive<usize>,
+    max: Option<usize>,
 ) -> Option<DynPattern>
 {
-    create_pattern(target, *range.start() as _, *range.end() - *range.start())
+    create_pattern(target, *range.start() as _, *range.end() - *range.start(), max)
 }
