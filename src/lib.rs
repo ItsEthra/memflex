@@ -15,6 +15,7 @@ pub mod internal;
 
 /// Useful types for interacting with C
 pub mod types;
+pub use types::{StrPtr, VmtPtr};
 
 mod memory;
 pub use memory::*;

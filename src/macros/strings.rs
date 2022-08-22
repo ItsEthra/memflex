@@ -1,4 +1,4 @@
-/// Generates C-like terminated string with the type of [`crate::types::CStr`]
+/// Generates C-like terminated string with the type of [`crate::types::StrPtr`]
 /// ```
 /// # use memflex::{cstr, terminated_array};
 /// # unsafe {
@@ -8,6 +8,6 @@
 #[macro_export]
 macro_rules! cstr {
     ( $($tt:tt)* ) => {
-        $crate::types::CStr::from_ptr(unsafe { core::ptr::NonNull::new_unchecked(core::concat!($($tt)*, "\x00").as_ptr() as _) })
+        $crate::types::StrPtr::from_ptr(unsafe { core::ptr::NonNull::new_unchecked(core::concat!($($tt)*, "\x00").as_ptr() as _) })
     }
 }

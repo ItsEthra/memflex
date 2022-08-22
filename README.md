@@ -125,6 +125,6 @@ memflex::function! {
     fn MIXER(f32, f32, f32) -> u32 = "function.exe"%"48 81 EC B8 00 00 00 F3";
 }
 
-use memflex::types::CStr;
-let zero_terminated: CStr = memflex::cstr!("Hello, World!");
+use memflex::types::StrPtr;
+let zero_terminated: StrPtr = memflex::cstr!("Hello, World!");
 ```
