@@ -4,6 +4,9 @@ use core::{
     ptr::NonNull,
 };
 
+mod vmt;
+pub use vmt::*;
+
 /// Windows datatypes
 #[cfg(windows)]
 pub mod win;

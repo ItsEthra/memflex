@@ -15,6 +15,7 @@ impl<V, F: FnOnce() -> V + 'static + Send + Sync> StaticCell<V, F> {
         }
     }
 
+    #[allow(clippy::cast_ref_to_mut)]
     #[inline]
     pub fn init(&self) {
         unsafe {
