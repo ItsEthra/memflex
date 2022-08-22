@@ -42,8 +42,8 @@ struct CFoo([u8; 0x10]);
 
 memflex::interface! {
     pub trait IFoo impl for CFoo {
-        extern fn get_health() -> i32 = 0;
-        extern fn set_health(new: i32) -> i32 = 1;
+        extern fn get_health() -> i32 = #0;
+        extern fn set_health(new: i32) -> i32 = #1;
     }
 }
 

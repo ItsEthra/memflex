@@ -57,24 +57,24 @@ memflex::interface! {
     pub trait IPlayer impl for ConcreteType {
         // Notice missing `&self`, this is intentional and macro will implicitly add it.
         // Functions without `&self` in interface doesn't make much sense.
-        extern "C" fn get_health() -> i32 = 0; // 0 - Index of the virtual function.
+        extern "C" fn get_health() -> i32 = #0; // 0 - Index of the virtual function.
 
         // *Returns old health*
-        extern "C" fn set_health(new: i32) -> i32 = 1; // 1 - Index of the virtual function.
+        extern "C" fn set_health(new: i32) -> i32 = #1; // 1 - Index of the virtual function.
     }
 
     trait Foo {
-        extern fn foo() = 0;
+        extern fn foo() = #0;
     }
 
     trait ParentVmt {
-        fn f1() -> i32 = 0;
-        fn f2() -> i32 = 1;
+        fn f1() -> i32 = #0;
+        fn f2() -> i32 = #1;
     }
 
     trait ChildVmt {
-        fn f3(a: i32) = 0;
-        fn f4(a: i32) = 1;
+        fn f3(a: i32) = #0;
+        fn f4(a: i32) = #1;
     }
 }
 

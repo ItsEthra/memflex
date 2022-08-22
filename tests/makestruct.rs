@@ -18,13 +18,13 @@ fn test_makestruct() {
 
 memflex::interface! {
     trait Tux {
-        fn f1() -> i32 = 0;
-        fn f2() -> i32 = 1;
+        fn f1() -> i32 = #0;
+        fn f2() -> i32 = #1;
     }
 
     trait Qur {
-        fn f3(a: i32) = 0;
-        fn f4(a: i32) = 1;
+        fn f3(a: i32) = #0;
+        fn f4(a: i32) = #1;
     }
 }
 

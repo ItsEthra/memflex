@@ -41,17 +41,17 @@
 ///
 /// memflex::interface! {
 ///     trait Foo {
-///         extern fn foo() = 0;
+///         extern fn foo() = #0;
 ///     }
 ///
 ///     trait ParentVmt {
-///         fn f1() -> i32 = 0;
-///         fn f2() -> i32 = 1;
+///         fn f1() -> i32 = #0;
+///         fn f2() -> i32 = #1;
 ///     }
 ///
 ///     trait ChildVmt {
-///         fn f3(a: i32) = 0;
-///         fn f4(a: i32) = 1;
+///         fn f3(a: i32) = #0;
+///         fn f4(a: i32) = #1;
 ///     }
 /// }
 /// ```
