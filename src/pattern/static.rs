@@ -1,18 +1,5 @@
-#[derive(Debug, Clone, Copy, PartialEq, Hash)]
-enum ByteMatch {
-    Exact(u8),
-    Any,
-}
-
-impl ByteMatch {
-    #[inline]
-    pub const fn matches(self, byte: u8) -> bool {
-        match self {
-            ByteMatch::Exact(b) => b == byte,
-            ByteMatch::Any => true,
-        }
-    }
-}
+use super::{ByteMatch, sealed};
+use crate::Matcher;
 
 #[test]
 fn test_char_to_u8() {
@@ -41,7 +28,7 @@ const fn single(c: char) -> u8 {
 /// assert!(ida.matches(data) && peid.matches(data) && code.matches(data));
 /// ```
 #[derive(Debug, Clone, PartialEq, Hash)]
-pub struct Pattern<const N: usize>([ByteMatch; N]);
+pub struct Pattern<const N: usize>(pub(crate) [ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
     /// Checks if pattern matches byte slice.
     /// ```
@@ -128,6 +115,14 @@ impl<const N: usize> Pattern<N> {
         }
 
         Self(out)
+    }
+}
+
+impl<const N: usize> sealed::Sealed for Pattern<N> { }
+
+impl<const N: usize> Matcher for Pattern<N> {
+    fn matches(&self, seq: &[u8]) -> bool {
+        self.matches(seq)
     }
 }
 
