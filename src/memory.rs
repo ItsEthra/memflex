@@ -92,15 +92,23 @@ pub unsafe fn create_pattern(
 ) -> Option<DynPattern>
 {
     let mut size = 3;
+    let mut offset = 0;
+    let span = from_raw_parts(start, len);
     
     loop {
         let pat = from_raw_parts(target, size);
-        if find_pattern(pat, start, len).count() > 0 {
+        if let Some((i, _)) = span
+            .windows(size)
+            .enumerate()
+            .skip(offset)
+            .find(|(i, seq)| pat.matches(seq) && start.add(*i) != target)
+        {
             size += 1;
+            offset = i;
             continue;
         }
 
-        break Some(DynPattern::from(pat))
+        break Some(pat.into());
     }
 }
 
