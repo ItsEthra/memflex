@@ -78,6 +78,7 @@ impl Debug for CStr {
 
 /// Basic information about module
 #[derive(Debug, Clone, Copy)]
+#[cfg(feature = "internal")]
 pub struct ModuleBasicInfo {
     /// Module's base
     pub base: *const u8,
@@ -87,7 +88,7 @@ pub struct ModuleBasicInfo {
 
 /// More information about module
 #[derive(Debug, Clone)]
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "internal"))]
 pub struct ModuleAdvancedInfo {
     /// Module's base
     pub base: *const u8,

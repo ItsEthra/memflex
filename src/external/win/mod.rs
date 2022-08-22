@@ -7,7 +7,14 @@ pub use thread::*;
 
 use crate::MfError;
 
+#[link(name = "ntdll")]
+extern "C" {
+    fn NtClose(h: isize) -> NtResult;
+}
+
 /// Represens an owned handle
+/// # Behavior
+/// When dropped will call `NtClose` on the handle.
 #[repr(transparent)]
 pub struct Handle(pub(crate) isize);
 impl Handle {
@@ -18,19 +25,22 @@ impl Handle {
         Self(h)
     }
 
-    /// Closes handle
+    /// Closes handle, providers an error code if closing failed.
     pub fn close(self) -> crate::Result<()> {
-        #[link(name = "ntdll")]
-        extern "C" {
-            fn NtClose(h: isize) -> NtResult;
-        }
-
-        unsafe { NtClose(self.0).expect_zero(()) }
+        let val = self.0;
+        std::mem::forget(self);
+        unsafe { NtClose(val).expect_zero(()) }
     }
 
     /// Checks if the handle is invalid, i.e. if the `value` == 0 || `value` == -1
     pub fn is_invalid(&self) -> bool {
         self.0 == 0 || self.0 == -1
+    }
+}
+
+impl Drop for Handle {
+    fn drop(&mut self) {
+        unsafe { NtClose(self.0); }
     }
 }
 
