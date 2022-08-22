@@ -117,5 +117,6 @@ memflex::global! {
     pub static MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
 }
 
-let zero_terminated: *const i8 = memflex::cstr!("Hello, World!");
+use memflex::types::CStr;
+let zero_terminated: CStr = memflex::cstr!("Hello, World!");
 ```

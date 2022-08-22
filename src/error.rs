@@ -17,6 +17,7 @@ pub enum MfError {
 }
 
 impl MfError {
+    #[allow(dead_code)]
     #[cfg(windows)]
     pub(crate) fn last<T>() -> Result<T> {
         #[link(name = "kernel32")]

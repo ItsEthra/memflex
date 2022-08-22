@@ -38,3 +38,21 @@ macro_rules! __resolver {
         $($tt)*
     }
 }
+
+/// Get's the size in bytes of the type or the variable
+/// ```
+/// # use memflex::sizeof;
+/// assert_eq!(sizeof!(i32), 4);
+/// 
+/// let var = 5_u64;
+/// assert_eq!(sizeof!(@var), 8);
+/// ```
+#[macro_export]
+macro_rules! sizeof {
+    ($ty:ty) => {
+        core::mem::size_of::<$ty>()
+    };
+    (@ $var:ident) => {
+        core::mem::size_of_val(&$var)
+    }
+}
