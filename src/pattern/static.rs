@@ -124,6 +124,10 @@ impl<const N: usize> Matcher for Pattern<N> {
     fn matches(&self, seq: &[u8]) -> bool {
         self.matches(seq)
     }
+
+    fn len(&self) -> usize {
+        N
+    }
 }
 
 /// Generates a pattern from IDA style string.

@@ -1,5 +1,5 @@
-use crate::pattern::Pattern;
 use core::{ops::RangeInclusive, slice::from_raw_parts};
+use crate::Matcher;
 
 /// Creates an inmmutable slice from terminated array.
 /// # Safety
@@ -50,13 +50,13 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// * `start` is a valid pointer and can be read
 /// * Memory from `start` to `start + len` (inclusive) can be read
 #[inline]
-pub unsafe fn find_pattern<const N: usize>(
-    pat: Pattern<N>,
+pub unsafe fn find_pattern(
+    pat: impl Matcher,
     start: *const u8,
     len: usize,
 ) -> impl Iterator<Item = *const u8> {
     from_raw_parts::<u8>(start, len)
-        .windows(N)
+        .windows(pat.len())
         .enumerate()
         .filter_map(move |(i, bytes)| {
             if pat.matches(bytes) {
@@ -71,8 +71,8 @@ pub unsafe fn find_pattern<const N: usize>(
 /// # Safety
 /// * Range represents a chunk of memory that can be read.
 #[inline]
-pub unsafe fn find_pattern_range<const N: usize>(
-    pat: Pattern<N>,
+pub unsafe fn find_pattern_range(
+    pat: impl Matcher,
     range: RangeInclusive<usize>,
 ) -> impl Iterator<Item = *const u8> {
     find_pattern(pat, *range.start() as _, *range.end() - *range.start())

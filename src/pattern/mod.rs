@@ -27,4 +27,7 @@ mod sealed {
 pub trait Matcher: sealed::Sealed {
     /// Matches byte sequence agains the pattern
     fn matches(&self, seq: &[u8]) -> bool;
+
+    /// Length of the pattern
+    fn len(&self) -> usize;
 }

@@ -3,7 +3,7 @@ use crate::{
     external::{Handle, NtResult},
     terminated_array,
     types::win::{AllocationType, FreeType, MemoryProtection, ProcessRights},
-    MfError, Pattern,
+    MfError, Matcher,
 };
 use core::{
     iter::from_fn,
@@ -284,25 +284,33 @@ impl OwnedProcess {
 
     /// Finds all occurences of the pattern in a given range.
     // @TODO: Can be optimized
-    pub fn find_pattern<const N: usize>(
-        &self,
-        pat: Pattern<N>,
+    pub fn find_pattern<'a>(
+        &'a self,
+        pat: impl Matcher + 'a,
         start: usize,
         len: usize,
-    ) -> impl Iterator<Item = usize> + '_ {
+    ) -> impl Iterator<Item = usize> + 'a {
+        
         let mut offset = 0;
+        let mut buf = vec![0; pat.len()];
+
         from_fn(move || {
-            while !self
-                .read::<[u8; N]>(start + offset)
-                .map(|b| pat.matches(&b))
-                .unwrap_or_default()
-            {
+            loop {
+                if self.read_buf(start + offset, &mut buf[..]).is_err() {
+                    return None;
+                }
+
+                if pat.matches(&buf[..]) {
+                    break;
+                }
+
                 offset += 1;
 
                 if offset >= len {
                     return None;
                 }
             }
+            
             offset += 1;
             Some(start + offset - 1)
         })
@@ -310,11 +318,11 @@ impl OwnedProcess {
     }
 
     /// Finds all occurences of the pattern in the specified module.
-    pub fn find_pattern_in_module<const N: usize>(
-        &self,
-        pat: Pattern<N>,
+    pub fn find_pattern_in_module<'a>(
+        &'a self,
+        pat: impl Matcher + 'a,
         module_name: &str,
-    ) -> crate::Result<impl Iterator<Item = usize> + '_> {
+    ) -> crate::Result<impl Iterator<Item = usize> + 'a> {
         let module = self.find_module(module_name)?;
         Ok(self.find_pattern(pat, module.base, module.size))
     }

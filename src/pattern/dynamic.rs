@@ -27,4 +27,8 @@ impl Matcher for DynPattern {
     fn matches(&self, seq: &[u8]) -> bool {
         self.matches(seq)
     }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
 }
