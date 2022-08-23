@@ -86,6 +86,6 @@ fn test_interface_sig() {
     unsafe {
         let p = memflex::create_pattern(CBar::bar as usize as _, m.base, m.size, None)
             .unwrap();
-        panic!("{:?}", p.to_ida_style());
+        assert_eq!("48 81 EC A8 00 00 00 F3", p.to_ida_style());
     }
 }

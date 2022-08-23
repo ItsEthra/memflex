@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use crate::cell::StaticCell;
 use core::mem::transmute;
 
-#[doc(hidden)]
+/// Global variable with explicitly defined offset.
 pub struct Global<T> {
     cell: StaticCell<usize, fn() -> usize>,
     _ph: PhantomData<T>,
@@ -18,6 +18,11 @@ impl<T> Global<T> {
             _ph: PhantomData,
             cell: StaticCell::new(init),
         }
+    }
+
+    /// Force resolves the address.
+    pub fn force(&self) {
+        self.cell.init();
     }
 }
 
