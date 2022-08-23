@@ -125,6 +125,16 @@ memflex::function! {
     fn MIXER(f32, f32, f32) -> u32 = "function.exe"%"48 81 EC B8 00 00 00 F3";
 }
 
+
+memflex::bitstruct! {
+    struct SomeStruct : u8 {
+        // Bits: 0, 1, 2
+        first: 0..=2,
+        // Bits: 3, 4, 5, 6, 7
+        next: 3..=7,
+    }
+}
+
 use memflex::types::StrPtr;
 let zero_terminated: StrPtr = memflex::cstr!("Hello, World!");
 ```

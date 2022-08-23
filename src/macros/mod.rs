@@ -8,6 +8,8 @@ mod strings;
 pub use strings::*;
 mod function;
 pub use function::*;
+mod bitstruct;
+pub use bitstruct::*;
 
 use crate::Pattern;
 
