@@ -1,7 +1,7 @@
 mod vmt;
 pub use vmt::*;
-mod strptr;
-pub use strptr::*;
+mod tstr;
+pub use tstr::*;
 
 /// Windows datatypes
 #[cfg(windows)]

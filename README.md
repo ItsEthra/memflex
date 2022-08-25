@@ -135,6 +135,6 @@ memflex::bitstruct! {
     }
 }
 
-use memflex::types::StrPtr;
-let zero_terminated: StrPtr = memflex::cstr!("Hello, World!");
+use memflex::types::TStr;
+let zero_terminated: TStr = memflex::tstr!("Hello, World!");
 ```

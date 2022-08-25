@@ -1,13 +1,13 @@
-/// Generates C-like terminated string with the type of [`crate::types::StrPtr`]
+/// Generates C-like terminated string with the type of [`crate::types::TStr`]
 /// ```
-/// # use memflex::{cstr, terminated_array};
+/// # use memflex::{tstr, terminated_array};
 /// # unsafe {
-/// assert_eq!(cstr!("123").as_str(), "123");
+/// assert_eq!(tstr!("123").as_str(), "123");
 /// # }
 /// ```
 #[macro_export]
-macro_rules! cstr {
+macro_rules! tstr {
     ( $($tt:tt)* ) => {
-        $crate::types::StrPtr::from_ptr(unsafe { core::ptr::NonNull::new_unchecked(core::concat!($($tt)*, "\x00").as_ptr() as _) })
+        $crate::types::TStr::from_ptr(unsafe { core::ptr::NonNull::new_unchecked(core::concat!($($tt)*, "\x00").as_ptr() as _) })
     }
 }
