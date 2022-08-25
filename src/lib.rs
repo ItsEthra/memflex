@@ -25,7 +25,7 @@ mod ptr;
 #[cfg(feature = "nightly")]
 pub use ptr::*;
 
-/// Some handy external API for interacting with system
+/// Some handy external API for interacting with the system
 #[cfg(feature = "external")]
 pub mod external;
 
@@ -45,3 +45,4 @@ macro_rules! bp {
 
 pub use memoffset;
 pub use memoffset::offset_of;
+pub use bitfield::bitfield;
