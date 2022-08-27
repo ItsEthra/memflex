@@ -49,6 +49,32 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
     core::slice::from_raw_parts_mut(first.sub(len), len)
 }
 
+/// Resolves immutable multilevel pointer.
+pub unsafe fn resolve_multilevel<T>(mut base: *const usize, offsets: &[usize]) -> *const T {
+    offsets.iter()
+        .for_each(|&o| {
+            base = base.cast::<u8>()
+                .add(o)
+                .cast::<usize>()
+                .read() as _;
+        });
+
+    base as _
+}
+
+/// Resolves mutable multilevel pointer.
+pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut usize, offsets: &[usize]) -> *mut T {
+    offsets.iter()
+        .for_each(|&o| {
+            base = base.cast::<u8>()
+                .add(o)
+                .cast::<usize>()
+                .read() as _;
+        });
+
+    base as _
+}
+
 /// Searches for a pattern internally by start address and search length.
 /// # Safety
 /// * `start` is a valid pointer and can be read
