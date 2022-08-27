@@ -1,4 +1,4 @@
-use crate::{Matcher, DynPattern};
+use crate::{Matcher, DynPattern, types::win::KeyCode};
 
 /// Searches for module's base address by its name.
 /// # Behavior
@@ -76,5 +76,45 @@ pub fn current_module() -> Option<crate::types::ModuleAdvancedInfo> {
         core::arch::asm!("lea {}, [rip]", out(reg) rip);
 
         modules().find(|m| rip < m.base as usize + m.size && rip > m.base as usize)
+    }
+}
+
+extern "C" {
+    fn AllocConsole();
+    fn FreeConsole();
+    fn FreeLibraryAndExitThread(lib: usize, code: u32) -> !;
+}
+
+#[link(name = "user32")]
+extern "C" {
+    fn GetAsyncKeyState(key: KeyCode) -> u16;
+}
+
+/// Allocates new console.
+pub fn alloc_console() {
+    unsafe {
+        AllocConsole();
+    }
+}
+
+/// Frees the console.
+pub fn free_console() {
+    unsafe {
+        FreeConsole();
+    }
+}
+
+/// Frees the library and exits current thread.
+pub fn free_library_and_exit_thread(lib: usize, code: u32) -> ! {
+    unsafe {
+        FreeLibraryAndExitThread(lib, code)
+    }
+}
+
+/// Returns the state of the key
+/// Internally uses `GetAsyncKeyState`
+pub fn key_state(key: KeyCode) -> u16 {
+    unsafe {
+        GetAsyncKeyState(key)
     }
 }

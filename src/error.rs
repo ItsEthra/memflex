@@ -12,8 +12,8 @@ pub enum MfError {
     ModuleNotFound,
     /// No threads running in the process
     NoThreads,
-    /// String read was not valid UTF-8 byte sequence
-    NotUtf8String,
+    /// String read was not valid UTF-8 or UTF-16 byte sequence
+    InvalidString,
     /// Value was null
     #[cfg(feature = "nightly")]
     Null

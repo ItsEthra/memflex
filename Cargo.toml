@@ -18,4 +18,4 @@ all = ["std", "internal", "nightly", "external"]
 
 [dependencies]
 memoffset = "0.6"
-bitfield = "0.14"
+bitflags = "1.3"

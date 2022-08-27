@@ -20,11 +20,19 @@ impl<T> Global<T> {
         }
     }
 
+    /// Returns the address of the global.
+    pub fn address(&self) -> usize {
+        *self.cell.value()
+    }
+
     /// Force resolves the address.
     pub fn force(&self) {
         self.cell.init();
     }
 }
+
+unsafe impl<T> Sync for Global<T> {}
+unsafe impl<T> Send for Global<T> {}
 
 impl<T> Deref for Global<T> {
     type Target = T;

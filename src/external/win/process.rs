@@ -144,7 +144,7 @@ impl OwnedProcess {
             offset += BUF_SIZE
         }
 
-        Ok(String::from_utf8(out).map_err(|_| MfError::NotUtf8String)?)
+        Ok(String::from_utf8(out).map_err(|_| MfError::InvalidString)?)
     }
 
     /// Writes buffer to the process memory, returning the amount of bytes written.

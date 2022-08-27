@@ -45,4 +45,4 @@ macro_rules! bp {
 
 pub use memoffset;
 pub use memoffset::offset_of;
-pub use bitfield::bitfield;
+pub use bitflags::bitflags;
