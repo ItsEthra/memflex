@@ -377,6 +377,19 @@ impl OwnedProcess {
         Ok(self.create_pattern(target, module.base, module.size, max)?)
     }
 
+    /// Resolves multilevel pointer
+    pub fn resolve_multilevel(
+        &self,
+        mut base: usize,
+        offsets: &[usize]
+    ) -> crate::Result<usize> {
+        for &o in offsets {
+            base = self.read(base + o)?;
+        }
+
+        Ok(base)
+    }
+
     /// Terminates the process with the specified code.
     pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
         unsafe { TerminateProcess(self.0 .0, exit_code).expect_nonzero(()) }
