@@ -94,7 +94,7 @@ macro_rules! __resolver {
     }
 }
 
-/// Get's the size in bytes of the type or the variable
+/// Gets the size in bytes of the type or the variable
 /// ```
 /// # use memflex::sizeof;
 /// assert_eq!(sizeof!(i32), 4);
