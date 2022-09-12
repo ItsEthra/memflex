@@ -73,6 +73,7 @@ extern "C" {
 }
 
 /// Owned handle to another process
+#[repr(transparent)]
 pub struct OwnedProcess(Handle);
 
 impl OwnedProcess {

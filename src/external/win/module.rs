@@ -21,20 +21,7 @@ struct FfiModuleEntry {
     path: [u16; 260],
 }
 
-#[derive(Debug, Clone)]
-/// Entry reprenses a single module in a process.
-pub struct ModuleEntry {
-    /// Module's base address
-    pub base: usize,
-    /// Module's size
-    pub size: usize,
-    /// Module's name
-    pub name: String,
-    /// Module's path
-    pub path: String,
-}
-
-impl From<&FfiModuleEntry> for ModuleEntry {
+impl From<&FfiModuleEntry> for ModuleAdvancedInfo {
     fn from(me: &FfiModuleEntry) -> Self {
         unsafe {
             Self {
@@ -81,7 +68,7 @@ impl ModuleIterator {
 }
 
 impl Iterator for ModuleIterator {
-    type Item = ModuleEntry;
+    type Item = ModuleAdvancedInfo;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.stop {
