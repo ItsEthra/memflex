@@ -1,4 +1,5 @@
-use crate::{types::ModuleAdvancedInfo, MfError};
+use crate::{types::ModuleAdvancedInfo, MfError, sizeof};
+use core::{mem::zeroed, slice::{from_raw_parts_mut, from_raw_parts}};
 
 /// Represents a single process in the system.
 /// # Details
@@ -44,6 +45,69 @@ impl OwnedProcess {
             } else {
                 Ok(read as usize)
             }
+        }
+    }
+
+    /// Reads a value of type `T` at `address`.
+    pub fn read<T>(&self, address: usize) -> crate::Result<T> {
+        unsafe {
+            let mut buf: T = zeroed();
+            self.read_buf(address, from_raw_parts_mut(&mut buf as *mut T as *mut u8, sizeof!(T)))?;
+            Ok(buf)
+        }
+    }
+
+    /// Reads zero terminated string at `address`.
+    pub fn read_str(&self, address: usize) -> crate::Result<String> {
+        const BUF_SIZE: usize = 4;
+
+        let mut out = vec![];
+        let mut offset = 0;
+
+        loop {
+            let buf = self.read::<[u8; BUF_SIZE]>(address + offset)?;
+
+            if let Some(i) = buf.iter().position(|b| *b == 0) {
+                out.extend_from_slice(&buf[..i]);
+                break;
+            } else {
+                out.extend_from_slice(&buf);
+            }
+
+            offset += BUF_SIZE
+        }
+
+        Ok(String::from_utf8(out).map_err(|_| MfError::InvalidString)?)
+    }
+
+    /// Writes process memory, returning amount of bytes written.
+    pub fn write_buf(&self, address: usize, buf: &[u8]) -> crate::Result<usize> {
+        unsafe {
+            let written = libc::process_vm_writev(
+                self.0 as _,
+                &libc::iovec {
+                    iov_base: buf.as_ptr() as _,
+                    iov_len: buf.len()
+                }, 1,
+                &libc::iovec {
+                    iov_base: address as _,
+                    iov_len: buf.len()
+                }, 1,
+                0
+            );
+
+            if written == -1 {
+                MfError::last()
+            } else {
+                Ok(written as usize)
+            }
+        }
+    }
+
+    /// Writes `value` at `address` in the process's memory, returning amount of bytes written.
+    pub fn write<T>(&self, address: usize, value: T) -> crate::Result<usize> {
+        unsafe {
+            self.write_buf(address, from_raw_parts(&value as *const T as *const u8, sizeof!(T)))
         }
     }
 
