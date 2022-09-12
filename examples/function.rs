@@ -29,6 +29,6 @@ fn mix_three(a: f32, b: f32, c: f32) -> u32 {
     out.iter_mut()
         .zip(n2.to_be_bytes())
         .for_each(|(a, b)| *a ^= b);
-    
+
     u32::from_be_bytes(out)
 }

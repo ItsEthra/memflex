@@ -1,7 +1,7 @@
-use core::ops::{Deref, DerefMut};
-use core::marker::PhantomData;
 use crate::cell::StaticCell;
+use core::marker::PhantomData;
 use core::mem::transmute;
+use core::ops::{Deref, DerefMut};
 
 /// Global variable with explicitly defined offset.
 pub struct Global<T> {
@@ -11,9 +11,7 @@ pub struct Global<T> {
 
 impl<T> Global<T> {
     #[doc(hidden)]
-    pub const fn new(
-        init: fn() -> usize
-    ) -> Self {
+    pub const fn new(init: fn() -> usize) -> Self {
         Self {
             _ph: PhantomData,
             cell: StaticCell::new(init),

@@ -59,33 +59,3 @@ fn test_interface() {
         assert_eq!(CFoo::FUNCTION_COUNT, 2);
     }
 }
-
-struct CBar(u32);
-impl CBar {
-    pub fn bar(&self, a: f32, b: f32) {
-        let c = (a * b) + (a % b);
-        println!("Hello: {}", self.0 as f32 + c);
-    }
-}
-
-memflex::interface! {
-    trait IBar impl for CBar {
-        fn func(a: f32, b: f32) = %"48 81 EC A8 00 00 00 F3", "interface-942106fee1176959.exe";
-    }
-}
-
-#[test]
-fn test_interface_sig() {
-    let bar = CBar(5);
-    
-    bar.bar(15., 30.);
-    bar.func(15., 30.);
-
-    let m = memflex::internal::current_module().unwrap();
-
-    unsafe {
-        let p = memflex::create_pattern(CBar::bar as usize as _, m.base, m.size, None)
-            .unwrap();
-        assert_eq!("48 81 EC A8 00 00 00 F3", p.to_ida_style());
-    }
-}

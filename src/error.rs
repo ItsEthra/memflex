@@ -16,7 +16,7 @@ pub enum MfError {
     InvalidString,
     /// Value was null
     #[cfg(feature = "nightly")]
-    Null
+    Null,
 }
 
 #[cfg(feature = "nightly")]
@@ -46,7 +46,7 @@ impl Display for MfError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for MfError { }
+impl std::error::Error for MfError {}
 
 #[allow(missing_docs)]
 pub type Result<T> = std::result::Result<T, MfError>;

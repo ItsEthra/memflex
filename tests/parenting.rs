@@ -6,7 +6,7 @@ memflex::makestruct! {
         a: f32,
         b: bool
     }
-    
+
     #[derive(Debug, Default, PartialEq)]
     pub struct Bar : Foo {
         c: u64,
@@ -26,7 +26,7 @@ fn test_parenting() {
     orig.a = 1.0;
     orig.b = true;
     orig.c = 1337;
-    orig.d = -15;    
+    orig.d = -15;
 
     unsafe {
         let parent = orig.upcast();

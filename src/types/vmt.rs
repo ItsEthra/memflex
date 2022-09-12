@@ -8,15 +8,15 @@ use core::slice::from_raw_parts;
 ///     f2: extern fn(i32, i32) -> f64,
 ///     zero: usize,
 /// }
-/// 
+///
 /// extern fn dummy1() -> i32 { 0 }
 /// extern fn dummy2(_: i32, _: i32) -> f64 { 0. }
-/// 
+///
 /// #[repr(C)]
 /// struct Obj {
 ///     vmt: *const ActualVmt
 /// }
-/// 
+///
 /// let obj = Box::into_raw(Box::new(Obj {
 ///     vmt: Box::into_raw(Box::new(ActualVmt {
 ///         f1: dummy1,
@@ -24,13 +24,13 @@ use core::slice::from_raw_parts;
 ///         zero: 0
 ///     })) as _,
 /// }));
-/// 
+///
 /// use memflex::types::VmtPtr;
 /// #[repr(C)]
 /// struct ObjFlex {
 ///     vmt: VmtPtr
 /// }
-/// 
+///
 /// # unsafe {
 /// let obj_flex: &ObjFlex = &*(obj as *const Obj as *const ObjFlex);
 /// assert_eq!(obj_flex.vmt.at::<1, extern fn(i32, i32) -> f32>() as usize, dummy2 as usize);
@@ -38,7 +38,7 @@ use core::slice::from_raw_parts;
 /// ```
 #[repr(transparent)]
 pub struct VmtPtr {
-    vmt: *const usize
+    vmt: *const usize,
 }
 
 impl VmtPtr {
@@ -61,8 +61,6 @@ impl VmtPtr {
     /// * `T` must be a function pointer type
     /// * `self` must be a valid pointer.
     pub unsafe fn at<const N: usize, T: Copy>(&self) -> T {
-        self.vmt.add(N)
-            .cast::<T>()
-            .read()
+        self.vmt.add(N).cast::<T>().read()
     }
 }

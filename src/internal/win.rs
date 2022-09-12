@@ -1,10 +1,10 @@
-use crate::{Matcher, DynPattern, types::win::KeyCode};
+use crate::{types::win::KeyCode, DynPattern, Matcher};
 
-/// Searches for module's base address by its name.
+/// Searches for a module by its name.
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
-pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasicInfo> {
-    use crate::types::{ModuleBasicInfo, win::Teb};
+pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
+    use crate::types::{win::Teb, ModuleBasicInfo};
 
     Teb::current()
         .peb
@@ -37,23 +37,12 @@ pub fn find_pattern_in_module(
     unsafe { Some(crate::find_pattern(pat, module.base, module.size)) }
 }
 
-/// Creates a pattern for `target`, making sure there there are no other exact matches in the specified module.
-/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
-pub fn create_pattern_in_module(
-    target: *const u8,
-    module_name: &str,
-    max: Option<usize>,
-) -> Option<DynPattern> {
-    let module = find_module_by_name(module_name)?;
-    unsafe { crate::create_pattern(target, module.base, module.size, max) }
-}
-
 /// Returns an iterator over all modules in the current process.
 /// # Panics
 /// If any module's name or path contain invalid UTF-16 sequence
 #[cfg(feature = "alloc")]
 pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
-    use crate::types::{ModuleAdvancedInfo, win::Teb};
+    use crate::types::{win::Teb, ModuleAdvancedInfo};
 
     Teb::current().peb.ldr.iter().map(|e| unsafe {
         ModuleAdvancedInfo {
@@ -63,20 +52,6 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
             path: e.full_dll_name.to_string().unwrap(),
         }
     })
-}
-
-/// Returns an information about current module
-/// # Behavior
-/// Looks up module by looking up RIP register.
-/// Can return `None` if the module was manually mapped and not linked in ldr.
-#[cfg(feature = "alloc")]
-pub fn current_module() -> Option<crate::types::ModuleAdvancedInfo> {
-    let mut rip: usize;
-    unsafe {
-        core::arch::asm!("lea {}, [rip]", out(reg) rip);
-
-        modules().find(|m| rip < m.base as usize + m.size && rip > m.base as usize)
-    }
 }
 
 extern "C" {
@@ -106,15 +81,11 @@ pub fn free_console() {
 
 /// Frees the library and exits current thread.
 pub fn free_library_and_exit_thread(lib: usize, code: u32) -> ! {
-    unsafe {
-        FreeLibraryAndExitThread(lib, code)
-    }
+    unsafe { FreeLibraryAndExitThread(lib, code) }
 }
 
 /// Returns the state of the key
 /// Internally uses `GetAsyncKeyState`
 pub fn key_state(key: KeyCode) -> u16 {
-    unsafe {
-        GetAsyncKeyState(key)
-    }
+    unsafe { GetAsyncKeyState(key) }
 }

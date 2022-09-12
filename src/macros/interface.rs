@@ -83,7 +83,7 @@ macro_rules! __gen_func {
         $(extern $($abi)?)? fn $fname<'this>(&'this self, $($arg_name: $arg_ty),* ) $(-> $ret)? {
             unsafe {
                 type Fn = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
-                
+
                 $crate::function! {
                     $(extern $($abi)?)? fn __CALLE(usize, $($arg_ty),*) $(-> $ret)? = $mod_name%$pattern;
                 }

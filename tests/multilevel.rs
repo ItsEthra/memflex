@@ -5,19 +5,19 @@ use memflex::resolve_multilevel;
 #[repr(C)]
 struct Mp1 {
     _pad: [u8; 0x10],
-    val: Box<Mp2>
+    val: Box<Mp2>,
 }
 
 #[repr(C)]
 struct Mp2 {
     _pad: [u8; 0x50],
-    val: Box<Mp3>
+    val: Box<Mp3>,
 }
 
 #[repr(C)]
 struct Mp3 {
     _pad: [u8; 8],
-    val: Box<i32>
+    val: Box<i32>,
 }
 
 #[test]

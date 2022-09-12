@@ -123,7 +123,7 @@ macro_rules! makestruct {
 /// This trait should not be implemented manually.
 pub unsafe trait Parent<C>: Sized
 where
-    C: Child<Parent = Self>
+    C: Child<Parent = Self>,
 {
     /// Casts parent to an immutable child reference
     /// # Safety
@@ -144,7 +144,7 @@ where
 /// This trait should not be implemented manually.
 pub unsafe trait Child: Sized
 where
-    Self: Deref<Target = Self::Parent> + DerefMut
+    Self: Deref<Target = Self::Parent> + DerefMut,
 {
     /// Type parent
     type Parent: Parent<Self>;
@@ -179,4 +179,3 @@ pub unsafe fn downcast<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
 pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
     P::downcast_mut(parent)
 }
-

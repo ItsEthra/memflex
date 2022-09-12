@@ -48,7 +48,9 @@ impl Handle {
 
 impl Drop for Handle {
     fn drop(&mut self) {
-        unsafe { NtClose(self.0); }
+        unsafe {
+            NtClose(self.0);
+        }
     }
 }
 
@@ -97,7 +99,7 @@ pub fn find_window(class_name: Option<&str>, window_name: Option<&str>) -> crate
     unsafe {
         let h = FindWindowW(
             cn.as_ref().map(|v| NonNull::new(v.as_ptr() as _).unwrap()),
-            wn.as_ref().map(|v| NonNull::new(v.as_ptr() as _).unwrap())
+            wn.as_ref().map(|v| NonNull::new(v.as_ptr() as _).unwrap()),
         );
 
         if h.is_invalid() {

@@ -1,5 +1,5 @@
-use super::{ByteMatch, sealed};
-use crate::{Pattern, Matcher};
+use super::{sealed, ByteMatch};
+use crate::{Matcher, Pattern};
 
 /// Dynamic pattern. Same as [`crate::pattern::Pattern`] but requires allocating and can be build at runtime.
 pub struct DynPattern(pub(crate) Vec<ByteMatch>);
@@ -8,10 +8,7 @@ impl DynPattern {
     /// Checks if the `data` matches the pattern.
     #[inline]
     pub fn matches(&self, data: &[u8]) -> bool {
-        self.0
-            .iter()
-            .zip(data.iter())
-            .all(|(a, b)| a.matches(*b))
+        self.0.iter().zip(data.iter()).all(|(a, b)| a.matches(*b))
     }
 
     fn to_ida_peid_style(&self, peid: bool) -> String {
@@ -55,14 +52,11 @@ impl<const N: usize> From<Pattern<N>> for DynPattern {
 
 impl<'a> From<&'a [u8]> for DynPattern {
     fn from(slice: &'a [u8]) -> Self {
-        Self(slice
-            .iter()
-            .map(|b| ByteMatch::Exact(*b))
-            .collect())
+        Self(slice.iter().map(|b| ByteMatch::Exact(*b)).collect())
     }
 }
 
-impl sealed::Sealed for DynPattern { }
+impl sealed::Sealed for DynPattern {}
 
 impl Matcher for DynPattern {
     fn matches(&self, seq: &[u8]) -> bool {

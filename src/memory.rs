@@ -1,5 +1,5 @@
 use core::{ops::RangeInclusive, slice::from_raw_parts};
-use crate::{Matcher, DynPattern};
+use crate::Matcher;
 
 /// Creates an inmmutable slice from terminated array.
 /// # Safety
@@ -51,26 +51,18 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 
 /// Resolves immutable multilevel pointer.
 pub unsafe fn resolve_multilevel<T>(mut base: *const usize, offsets: &[usize]) -> *const T {
-    offsets.iter()
-        .for_each(|&o| {
-            base = base.cast::<u8>()
-                .add(o)
-                .cast::<usize>()
-                .read() as _;
-        });
+    offsets.iter().for_each(|&o| {
+        base = base.cast::<u8>().add(o).cast::<usize>().read() as _;
+    });
 
     base as _
 }
 
 /// Resolves mutable multilevel pointer.
 pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut usize, offsets: &[usize]) -> *mut T {
-    offsets.iter()
-        .for_each(|&o| {
-            base = base.cast::<u8>()
-                .add(o)
-                .cast::<usize>()
-                .read() as _;
-        });
+    offsets.iter().for_each(|&o| {
+        base = base.cast::<u8>().add(o).cast::<usize>().read() as _;
+    });
 
     base as _
 }
@@ -108,50 +100,4 @@ pub unsafe fn find_pattern_range(
     range: RangeInclusive<usize>,
 ) -> impl Iterator<Item = *const u8> {
     find_pattern(pat, *range.start() as _, *range.end() - *range.start())
-}
-
-/// Creates a pattern for `target` address, making sure there are no exact matches in range from `start` to `start + len`.
-/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
-pub unsafe fn create_pattern(
-    target: *const u8,
-    start: *const u8,
-    len: usize,
-    max: Option<usize>,
-) -> Option<DynPattern>
-{
-    let mut size = 3;
-    let mut offset = 0;
-    let span = from_raw_parts(start, len);
-    
-    loop {
-        let pat = from_raw_parts(target, size);
-        if let Some((i, _)) = span
-            .windows(size)
-            .enumerate()
-            .skip(offset)
-            .find(|(i, seq)| pat.matches(seq) && start.add(*i) != target)
-        {
-            size += 1;
-            offset = i;
-
-            if let Some(max) = max && size > max {
-                return None;
-            }
-
-            continue;
-        }
-
-        break Some(pat.into());
-    }
-}
-
-/// Creates a pattern for `target` address, making sure there are no other exact matches in `range`.
-/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
-pub unsafe fn create_pattern_range(
-    target: *const u8,
-    range: RangeInclusive<usize>,
-    max: Option<usize>,
-) -> Option<DynPattern>
-{
-    create_pattern(target, *range.start() as _, *range.end() - *range.start(), max)
 }

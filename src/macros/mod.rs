@@ -39,7 +39,7 @@ macro_rules! __resolve_by {
     (# $module:literal, $second:literal) => {
         $crate::ResolveBy::<0>::NameOffset {
             module_name: $module,
-            offset: $second
+            offset: $second,
         }
     };
     (% $module:literal, $second:literal) => {
@@ -64,22 +64,20 @@ pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
                 .expect("Module not found")
                 .base as usize
                 + offset
-        },
+        }
         ResolveBy::IdaPattern {
             module_name,
             pattern,
-        } => {
-            find_pattern_in_module(pattern, module_name)
-                .unwrap()
-                .next()
-                .unwrap() as usize
-        },
+        } => find_pattern_in_module(pattern, module_name)
+            .unwrap()
+            .next()
+            .unwrap() as usize,
     }
 }
 
 #[doc(hidden)]
 #[cfg(not(windows))]
-pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
+pub fn __default_resolver<const N: usize>(_res: ResolveBy<N>) -> usize {
     todo!()
 }
 
@@ -91,14 +89,14 @@ macro_rules! __resolver {
     };
     ($item:path) => {
         $item
-    }
+    };
 }
 
 /// Gets the size in bytes of the type or the variable
 /// ```
 /// # use memflex::sizeof;
 /// assert_eq!(sizeof!(i32), 4);
-/// 
+///
 /// let var = 5_u64;
 /// assert_eq!(sizeof!(@var), 8);
 /// ```
@@ -109,5 +107,5 @@ macro_rules! sizeof {
     };
     (@ $var:ident) => {
         core::mem::size_of_val(&$var)
-    }
+    };
 }

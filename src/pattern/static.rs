@@ -1,4 +1,4 @@
-use super::{ByteMatch, sealed};
+use super::{sealed, ByteMatch};
 use crate::Matcher;
 
 #[test]
@@ -133,7 +133,7 @@ impl<const N: usize> Pattern<N> {
     }
 }
 
-impl<const N: usize> sealed::Sealed for Pattern<N> { }
+impl<const N: usize> sealed::Sealed for Pattern<N> {}
 
 impl<const N: usize> Matcher for Pattern<N> {
     fn matches(&self, seq: &[u8]) -> bool {

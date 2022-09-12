@@ -3,7 +3,7 @@ use crate::{
     external::{Handle, NtResult},
     terminated_array,
     types::win::{AllocationType, FreeType, MemoryProtection, ProcessRights},
-    MfError, Matcher, DynPattern,
+    DynPattern, Matcher, MfError,
 };
 use core::{
     iter::from_fn,
@@ -136,11 +136,11 @@ impl OwnedProcess {
 
             if let Some(i) = buf.iter().position(|b| *b == 0) {
                 out.extend_from_slice(&buf[..i]);
-                break
+                break;
             } else {
                 out.extend_from_slice(&buf);
             }
-            
+
             offset += BUF_SIZE
         }
 
@@ -290,7 +290,6 @@ impl OwnedProcess {
         start: usize,
         len: usize,
     ) -> impl Iterator<Item = usize> + 'a {
-        
         let mut offset = 0;
         let mut buf = vec![0; pat.size()];
 
@@ -310,7 +309,7 @@ impl OwnedProcess {
                     return None;
                 }
             }
-            
+
             offset += 1;
             Some(start + offset - 1)
         })
@@ -328,7 +327,7 @@ impl OwnedProcess {
     }
 
     /// Creates a pattern for `target` making sure there are no other matches in range from `start` to `start + len`.
-/// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
+    /// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
     pub fn create_pattern(
         &self,
         target: usize,
@@ -336,7 +335,6 @@ impl OwnedProcess {
         len: usize,
         max: Option<usize>,
     ) -> crate::Result<Option<DynPattern>> {
-
         let mut size = 3;
         let mut offset = 0;
 
@@ -360,7 +358,7 @@ impl OwnedProcess {
             }
 
             if done {
-                return Ok(Some(pat.as_slice().into()))
+                return Ok(Some(pat.as_slice().into()));
             }
         }
     }
@@ -371,18 +369,14 @@ impl OwnedProcess {
         &self,
         target: usize,
         module_name: &str,
-        max: Option<usize>
+        max: Option<usize>,
     ) -> crate::Result<Option<DynPattern>> {
         let module = self.find_module(module_name)?;
         Ok(self.create_pattern(target, module.base, module.size, max)?)
     }
 
     /// Resolves multilevel pointer
-    pub fn resolve_multilevel(
-        &self,
-        mut base: usize,
-        offsets: &[usize]
-    ) -> crate::Result<usize> {
+    pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
         for &o in offsets {
             base = self.read(base + o)?;
         }

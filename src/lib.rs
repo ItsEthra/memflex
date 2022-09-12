@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
 #![cfg_attr(feature = "nightly", feature(try_trait_v2))]
@@ -43,6 +44,6 @@ macro_rules! bp {
     };
 }
 
+pub use bitflags::bitflags;
 pub use memoffset;
 pub use memoffset::offset_of;
-pub use bitflags::bitflags;
