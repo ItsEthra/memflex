@@ -1,19 +1,14 @@
 use core::fmt::{self, Display};
 
-#[cfg(unix)]
-extern "C" {
-    static errno: i32;
-}
-
 /// Global error type
 #[derive(Debug)]
 pub enum MfError {
     /// Nt error code
     #[cfg(windows)]
     NtStatus(u32),
-    // /// Unix errno
-    // #[cfg(unix)]
-    // Errno(i32),
+    /// Unix errno
+    #[cfg(unix)]
+    Errno(i32),
     /// Specified process was not found
     ProcessNotFound,
     /// Specified module was not found
@@ -47,11 +42,9 @@ impl MfError {
 
     #[cfg(unix)]
     pub(crate) fn last<T>() -> Result<T> {
-        Err(todo!())
-
-        // unsafe {
-        //     Err(MfError::Errno(errno))
-        // }
+        unsafe {
+            Err(MfError::Errno(*libc::__errno_location()))
+        }
     }
 }
 
