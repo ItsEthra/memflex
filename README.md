@@ -38,8 +38,11 @@ fn inner(other: Ptr<bool>) -> Flow<bool> {
 let ida = ida_pat!("13 ? D1");
 let peid = peid_pat!("13 ?? D1");
 
-let first = memflex::internal::find_pattern_in_module(ida, "ntdll.dll").unwrap().next();
-let last = memflex::internal::find_pattern_in_module(peid, "ntdll.dll").unwrap().last();
+#[cfg(windows)]
+{
+    let first = memflex::internal::find_pattern_in_module(ida, "ntdll.dll").unwrap().next();
+    let last = memflex::internal::find_pattern_in_module(peid, "ntdll.dll").unwrap().last();
+}
 ```
 * Module searching
 ```rust
