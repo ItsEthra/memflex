@@ -9,6 +9,7 @@ use std::fs;
 /// # Details
 /// There is no such concept as 'owned' procses in unix. (i think).
 /// The name is the same as on windows to reduce the hasle of cross-platform code.
+#[derive(Debug)]
 #[repr(transparent)]
 pub struct OwnedProcess(pub(crate) u32);
 
@@ -228,14 +229,10 @@ impl ProcessIterator {
             )
             .filter_map(|de| {
                 let id = de.file_name().to_string_lossy().parse::<u32>().unwrap();
-                let path = fs::read_to_string(format!("/proc/{id}/cmdline")).unwrap()
-                    .split_once('\0')?
-                    .0
-                    .to_owned();
-
-                if !path.contains('/') {
-                    return None;
-                }
+                let path = fs::read_link(format!("/proc/{id}/exe"))
+                    .ok()?
+                    .to_string_lossy()
+                    .into_owned();
 
                 Some((id, path))
             })
@@ -243,18 +240,34 @@ impl ProcessIterator {
                 ProcessEntry {
                     path: path.clone(),
                     name: path.rsplit_once('/').unwrap().1.to_owned(),
-                    parent_id: fs::read_to_string(format!("/proc/{id}/stat")).unwrap()
-                        .split(' ')
-                        .nth(3)
-                        .unwrap()
-                        .parse::<u32>()
-                        .unwrap(),
+                    parent_id: hella_cringe(fs::read_to_string(format!("/proc/{id}/stat")).unwrap()),
                     id,
                 }
             });
 
         Ok(Self(Box::new(iter)))
     }
+}
+
+// sigh, am i really this stupid?
+// I don't know how to make it better pls help me
+fn hella_cringe(mut stat: String) -> u32 {
+    let (from, to) = (
+        stat.find('(').unwrap(),
+        stat.find(')').unwrap()
+    );
+
+    // Example from /proc/id/stat
+    // 123 (Socket Process) 123 123
+    //            ^
+    //            |
+    // This is why I have severe depression
+    stat.drain(from..=(to + 1));
+    stat.split_whitespace()
+        .nth(2)
+        .unwrap()
+        .parse::<u32>()
+        .unwrap()
 }
 
 impl Iterator for ProcessIterator {
@@ -271,7 +284,7 @@ pub fn open_process_by_name(
 ) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
         .find_map(|pe| {
-            if pe.path.eq_ignore_ascii_case(name) {
+            if pe.name.eq_ignore_ascii_case(name) {
                 Some(pe.open())
             } else {
                 None

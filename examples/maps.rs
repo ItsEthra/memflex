@@ -2,7 +2,7 @@
 fn main() {
     use memflex::external::ProcessIterator;
 
-    for d in ProcessIterator::new().unwrap() {
-        dbg!(d.name);
+    for p in ProcessIterator::new().unwrap() {
+        dbg!(p.name);
     }
 }
