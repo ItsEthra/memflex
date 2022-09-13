@@ -1,5 +1,5 @@
-use core::{ops::RangeInclusive, slice::from_raw_parts};
 use crate::Matcher;
+use core::{ops::RangeInclusive, slice::from_raw_parts};
 
 /// Creates an inmmutable slice from terminated array.
 /// # Safety

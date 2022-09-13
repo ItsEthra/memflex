@@ -1,4 +1,6 @@
 mod vmt;
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
+
 pub use vmt::*;
 mod tstr;
 pub use tstr::*;
@@ -34,4 +36,83 @@ pub struct ModuleAdvancedInfo {
     pub name: String,
     /// Module's full path
     pub path: String,
+}
+
+/// General memory protection.
+#[derive(Debug, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct Protection(pub u8);
+
+#[allow(missing_docs)]
+impl Protection {
+    pub const NONE: Self = Self(0b000);
+    pub const R: Self = Self(0b100);
+    pub const RW: Self = Self(0b110);
+    pub const RWX: Self = Self(0b111);
+    pub const RX: Self = Self(0b101);
+    pub const W: Self = Self(0b010);
+    pub const WX: Self = Self(0b011);
+    pub const X: Self = Self(0b001);
+}
+
+impl Protection {
+    /// Can read?
+    #[inline]
+    pub fn read(&self) -> bool {
+        self.0 & Self::R.0 != 0
+    }
+
+    /// Can write?
+    #[inline]
+    pub fn write(&self) -> bool {
+        self.0 & Self::W.0 != 0
+    }
+
+    /// Can execute?
+    #[inline]
+    pub fn execute(&self) -> bool {
+        self.0 & Self::X.0 != 0
+    }
+}
+
+impl BitOr for Protection {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl BitOrAssign for Protection {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
+
+impl BitAnd for Protection {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self(self.0 & rhs.0)
+    }
+}
+
+impl BitAndAssign for Protection {
+    fn bitand_assign(&mut self, rhs: Self) {
+        self.0 &= rhs.0
+    }
+}
+
+impl BitXor for Protection {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        Self(self.0 ^ rhs.0)
+    }
+}
+
+impl BitXorAssign for Protection {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        self.0 ^= rhs.0;
+    }
 }

@@ -43,9 +43,7 @@ impl MfError {
 
     #[cfg(unix)]
     pub(crate) fn last<T>() -> Result<T> {
-        unsafe {
-            Err(MfError::Errno(*libc::__errno_location()))
-        }
+        unsafe { Err(MfError::Errno(*libc::__errno_location())) }
     }
 }
 

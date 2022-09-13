@@ -36,7 +36,6 @@ pub fn find_module_by_name(name: &str) -> Option<ModuleBasicInfo> {
             size: m_to - m_from,
         })
     }
-    
 }
 
 #[cfg(feature = "alloc")]
