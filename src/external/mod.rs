@@ -52,5 +52,5 @@ pub struct MappedRegion {
     /// End
     pub to: usize,
     /// Prtection
-    pub prot: Protection
+    pub prot: Protection,
 }

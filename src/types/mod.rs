@@ -82,15 +82,16 @@ impl Protection {
     /// * s[2] != x | -
     pub fn parse(s: &str) -> Self {
         assert!(
-            s.len() == 3 &&
-            s.is_ascii() &&
-            s.chars().all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
+            s.len() == 3
+                && s.is_ascii()
+                && s.chars()
+                    .all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
         );
 
-        let val = ((s.as_bytes()[0] == b'r') as u8) << 2 |
-            ((s.as_bytes()[1] == b'w') as u8) << 1 |
-            (s.as_bytes()[2] == b'x') as u8;
-        
+        let val = ((s.as_bytes()[0] == b'r') as u8) << 2
+            | ((s.as_bytes()[1] == b'w') as u8) << 1
+            | (s.as_bytes()[2] == b'x') as u8;
+
         Self(val)
     }
 }

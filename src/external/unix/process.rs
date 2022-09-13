@@ -1,4 +1,9 @@
-use crate::{sizeof, types::{ModuleAdvancedInfo, Protection}, Matcher, MfError, external::{ProcessEntry, MappedRegion}};
+use crate::{
+    external::{MappedRegion, ProcessEntry},
+    sizeof,
+    types::{ModuleAdvancedInfo, Protection},
+    Matcher, MfError,
+};
 use core::{
     mem::zeroed,
     slice::{from_raw_parts, from_raw_parts_mut},
@@ -226,20 +231,14 @@ impl OwnedProcess {
             .lines()
             .map(|l| {
                 let mut iter = l.split(' ');
-                let (from, to) = iter.next().unwrap()
-                    .split_once('-')
-                    .unwrap();
+                let (from, to) = iter.next().unwrap().split_once('-').unwrap();
 
                 let from = usize::from_str_radix(from, 16).unwrap();
                 let to = usize::from_str_radix(to, 16).unwrap();
 
-                let prot = Protection::parse(&iter.next()
-                    .unwrap()
-                    [0..3]
-                );
+                let prot = Protection::parse(&iter.next().unwrap()[0..3]);
 
                 MappedRegion { from, to, prot }
-
             })
             .collect()
     }
@@ -252,7 +251,6 @@ impl OwnedProcess {
 
         Ok(base)
     }
-
 }
 
 /// Iterator over all processes in the system.
@@ -266,10 +264,14 @@ impl ProcessIterator {
         let iter = fs::read_dir("/proc")
             .unwrap()
             .flatten()
-            .filter(|de|
-                de.file_type().map(|t| t.is_dir()).unwrap_or_default() &&
-                de.file_name().to_string_lossy().chars().all(|c| c.is_numeric())
-            )
+            .filter(|de| {
+                de.file_type().map(|t| t.is_dir()).unwrap_or_default()
+                    && de
+                        .file_name()
+                        .to_string_lossy()
+                        .chars()
+                        .all(|c| c.is_numeric())
+            })
             .filter_map(|de| {
                 let id = de.file_name().to_string_lossy().parse::<u32>().unwrap();
                 let path = fs::read_link(format!("/proc/{id}/exe"))
@@ -279,13 +281,11 @@ impl ProcessIterator {
 
                 Some((id, path))
             })
-            .map(|(id, path)| {
-                ProcessEntry {
-                    path: path.clone(),
-                    name: path.rsplit_once('/').unwrap().1.to_owned(),
-                    parent_id: hella_cringe(fs::read_to_string(format!("/proc/{id}/stat")).unwrap()),
-                    id,
-                }
+            .map(|(id, path)| ProcessEntry {
+                path: path.clone(),
+                name: path.rsplit_once('/').unwrap().1.to_owned(),
+                parent_id: hella_cringe(fs::read_to_string(format!("/proc/{id}/stat")).unwrap()),
+                id,
             });
 
         Ok(Self(Box::new(iter)))
@@ -295,10 +295,7 @@ impl ProcessIterator {
 // sigh, am i really this stupid?
 // I don't know how to make it better pls help me
 fn hella_cringe(mut stat: String) -> u32 {
-    let (from, to) = (
-        stat.find('(').unwrap(),
-        stat.find(')').unwrap()
-    );
+    let (from, to) = (stat.find('(').unwrap(), stat.find(')').unwrap());
 
     // Example from /proc/id/stat
     // 123 (Socket Process) 123 123
@@ -322,9 +319,7 @@ impl Iterator for ProcessIterator {
 }
 
 /// Searches for the specified process by its name.
-pub fn find_process_by_name(
-    name: &str,
-) -> crate::Result<OwnedProcess> {
+pub fn find_process_by_name(name: &str) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
         .find_map(|pe| {
             if pe.name.eq_ignore_ascii_case(name) {
@@ -337,9 +332,7 @@ pub fn find_process_by_name(
 }
 
 /// Searches for the specified process by its id.
-pub fn find_process_by_id(
-    id: u32,
-) -> crate::Result<OwnedProcess> {
+pub fn find_process_by_id(id: u32) -> crate::Result<OwnedProcess> {
     if fs::metadata(format!("/proc/{id}")).is_ok() {
         return Err(MfError::ProcessNotFound);
     }
