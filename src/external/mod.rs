@@ -8,6 +8,8 @@ mod unix;
 #[cfg(unix)]
 pub use unix::*;
 
+use crate::types::Protection;
+
 #[derive(Debug)]
 /// Single process
 pub struct ProcessEntry {
@@ -42,3 +44,13 @@ impl ProcessEntry {
     }
 }
 
+/// Represents a chunk of mapped memory in a process
+#[derive(Debug)]
+pub struct MappedRegion {
+    /// Start
+    pub from: usize,
+    /// End
+    pub to: usize,
+    /// Prtection
+    pub prot: Protection
+}

@@ -1,4 +1,4 @@
-use crate::{sizeof, types::ModuleAdvancedInfo, Matcher, MfError, external::ProcessEntry};
+use crate::{sizeof, types::{ModuleAdvancedInfo, Protection}, Matcher, MfError, external::{ProcessEntry, MappedRegion}};
 use core::{
     mem::zeroed,
     slice::{from_raw_parts, from_raw_parts_mut},
@@ -18,6 +18,23 @@ impl OwnedProcess {
     #[inline]
     pub fn id(&self) -> u32 {
         self.0
+    }
+
+    /// Returns full path to the process.
+    pub fn path(&self) -> String {
+        fs::read_link(format!("/proc/{}/exe", self.0))
+            .unwrap()
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    /// Returns the name of the process
+    pub fn name(&self) -> String {
+        fs::read_link(format!("/proc/{}/exe", self.0))
+            .unwrap()
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default()
     }
 
     /// Reads process memory, returning amount of bytes read.
@@ -202,6 +219,31 @@ impl OwnedProcess {
         .fuse()
     }
 
+    /// Returns an iterator over mapped regions in the process.
+    pub fn maps(&self) -> Vec<MappedRegion> {
+        fs::read_to_string(format!("/proc/{}/maps", self.0))
+            .unwrap()
+            .lines()
+            .map(|l| {
+                let mut iter = l.split(' ');
+                let (from, to) = iter.next().unwrap()
+                    .split_once('-')
+                    .unwrap();
+
+                let from = usize::from_str_radix(from, 16).unwrap();
+                let to = usize::from_str_radix(to, 16).unwrap();
+
+                let prot = Protection::parse(&iter.next()
+                    .unwrap()
+                    [0..3]
+                );
+
+                MappedRegion { from, to, prot }
+
+            })
+            .collect()
+    }
+
     /// Resolves multilevel pointer
     pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
         for &o in offsets {
@@ -210,6 +252,7 @@ impl OwnedProcess {
 
         Ok(base)
     }
+
 }
 
 /// Iterator over all processes in the system.
@@ -278,8 +321,8 @@ impl Iterator for ProcessIterator {
     }
 }
 
-/// Tried to open process by name
-pub fn open_process_by_name(
+/// Searches for the specified process by its name.
+pub fn find_process_by_name(
     name: &str,
 ) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
@@ -293,8 +336,8 @@ pub fn open_process_by_name(
         .ok_or(MfError::ProcessNotFound)?
 }
 
-/// Tried to open process by id
-pub fn open_process_by_id(
+/// Searches for the specified process by its id.
+pub fn find_process_by_id(
     id: u32,
 ) -> crate::Result<OwnedProcess> {
     if fs::metadata(format!("/proc/{id}")).is_ok() {

@@ -73,6 +73,31 @@ impl Protection {
     pub fn execute(&self) -> bool {
         self.0 & Self::X.0 != 0
     }
+
+    /// Parses string of kind `r-x`.
+    /// # Panics
+    /// * `s.len()` isn't 3.
+    /// * s[0] != r | -
+    /// * s[1] != w | -
+    /// * s[2] != x | -
+    pub fn parse(s: &str) -> Self {
+        assert!(
+            s.len() == 3 &&
+            s.is_ascii() &&
+            s.chars().all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
+        );
+
+        let val = ((s.as_bytes()[0] == b'r') as u8) << 2 |
+            ((s.as_bytes()[1] == b'w') as u8) << 1 |
+            (s.as_bytes()[2] == b'x') as u8;
+        
+        Self(val)
+    }
+}
+
+#[test]
+fn test_parse_prot() {
+    assert_eq!(Protection::RX, Protection::parse("r-x"));
 }
 
 impl BitOr for Protection {
