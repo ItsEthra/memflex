@@ -38,7 +38,7 @@ impl ProcessEntry {
     /// returns Ok(P).
     #[cfg(unix)]
     pub fn open(&self) -> crate::Result<OwnedProcess> {
-        Ok(OwnedProcess::new(self.id))
+        Ok(OwnedProcess(self.id))
     }
 }
 

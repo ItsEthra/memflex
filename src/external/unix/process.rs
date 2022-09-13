@@ -10,19 +10,9 @@ use std::fs;
 /// There is no such concept as 'owned' procses in unix. (i think).
 /// The name is the same as on windows to reduce the hasle of cross-platform code.
 #[repr(transparent)]
-pub struct OwnedProcess(u32);
+pub struct OwnedProcess(pub(crate) u32);
 
 impl OwnedProcess {
-    /// Creates a new `OwnedProcess` from id.
-    ///
-    /// This function DOESN'T creates a new process.
-    /// `OwnedProcess` just provides functions to interact with already
-    /// existing process
-    #[inline]
-    pub fn new(id: u32) -> Self {
-        Self(id)
-    }
-
     /// Returns the id of the process.
     #[inline]
     pub fn id(&self) -> u32 {
@@ -273,4 +263,30 @@ impl Iterator for ProcessIterator {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
     }
+}
+
+/// Tried to open process by name
+pub fn open_process_by_name(
+    name: &str,
+) -> crate::Result<OwnedProcess> {
+    ProcessIterator::new()?
+        .find_map(|pe| {
+            if pe.path.eq_ignore_ascii_case(name) {
+                Some(pe.open())
+            } else {
+                None
+            }
+        })
+        .ok_or(MfError::ProcessNotFound)?
+}
+
+/// Tried to open process by id
+pub fn open_process_by_id(
+    id: u32,
+) -> crate::Result<OwnedProcess> {
+    if fs::metadata(format!("/proc/{id}")).is_ok() {
+        return Err(MfError::ProcessNotFound);
+    }
+
+    Ok(OwnedProcess(id))
 }
