@@ -5,10 +5,7 @@ use crate::{
     types::win::{AllocationType, FreeType, MemoryProtection, ProcessRights},
     DynPattern, Matcher, MfError,
 };
-use core::{
-    iter::from_fn,
-    mem::{size_of, zeroed},
-};
+use core::mem::{size_of, zeroed};
 
 #[link(name = "kernel32")]
 extern "C" {
@@ -267,7 +264,7 @@ impl OwnedProcess {
     }
 
     /// Returns an iterator over process's modules.
-    pub fn modules(&self) -> crate::Result<ModuleIterator> {
+    pub fn modules(&self) -> crate::Result<impl Iteraotr<Item = ModuleAdvancedInfo>> {
         ModuleIterator::new(self.id())
     }
 
@@ -294,7 +291,7 @@ impl OwnedProcess {
         let mut offset = 0;
         let mut buf = vec![0; pat.size()];
 
-        from_fn(move || {
+        std::iter::from_fn(move || {
             loop {
                 if self.read_buf(start + offset, &mut buf[..]).is_err() {
                     return None;

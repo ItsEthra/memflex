@@ -1,4 +1,4 @@
-use crate::{types::ModuleAdvancedInfo, MfError, sizeof};
+use crate::{types::ModuleAdvancedInfo, MfError, sizeof, Matcher};
 use core::{mem::zeroed, slice::{from_raw_parts_mut, from_raw_parts}};
 
 /// Represents a single process in the system.
@@ -151,4 +151,48 @@ impl OwnedProcess {
             })
         }))
     }
+
+    /// Searches for the specified module in the process.
+    /// # Case
+    /// Search is done case insensetive.
+    pub fn find_module(&self, name: &str) -> crate::Result<ModuleAdvancedInfo> {
+        self.modules()?
+            .find(|m| m.name.eq_ignore_ascii_case(name))
+            .ok_or(MfError::ModuleNotFound)
+    }
+
+    /// Finds all occurences of the pattern in a given range.
+    // @TODO: Can be optimized
+    pub fn find_pattern<'a>(
+        &'a self,
+        pat: impl Matcher + 'a,
+        start: usize,
+        len: usize,
+    ) -> impl Iterator<Item = usize> + 'a {
+        let mut offset = 0;
+        let mut buf = vec![0; pat.size()];
+
+        std::iter::from_fn(move || {
+            loop {
+                if self.read_buf(start + offset, &mut buf[..]).is_err() {
+                    return None;
+                }
+
+                if pat.matches(&buf[..]) {
+                    break;
+                }
+
+                offset += 1;
+
+                if offset >= len {
+                    return None;
+                }
+            }
+
+            offset += 1;
+            Some(start + offset - 1)
+        })
+        .fuse()
+    }
+
 }

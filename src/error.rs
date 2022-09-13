@@ -29,6 +29,7 @@ impl crate::ptr::NullError for MfError {
     }
 }
 
+#[allow(dead_code)]
 impl MfError {
     #[cfg(windows)]
     pub(crate) fn last<T>() -> Result<T> {

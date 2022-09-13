@@ -28,15 +28,6 @@ pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> 
         })
 }
 
-/// Searches for a pattern in the specified module.
-pub fn find_pattern_in_module(
-    pat: impl Matcher,
-    module_name: &str,
-) -> Option<impl Iterator<Item = *const u8>> {
-    let module = find_module_by_name(module_name)?;
-    unsafe { Some(crate::find_pattern(pat, module.base, module.size)) }
-}
-
 /// Returns an iterator over all modules in the current process.
 /// # Panics
 /// If any module's name or path contain invalid UTF-16 sequence
