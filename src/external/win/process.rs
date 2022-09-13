@@ -361,18 +361,6 @@ impl OwnedProcess {
         }
     }
 
-    /// Creates a pattern for `target` making sure there are no other matches in the specified module.
-    /// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
-    pub fn create_pattern_in_module(
-        &self,
-        target: usize,
-        module_name: &str,
-        max: Option<usize>,
-    ) -> crate::Result<Option<DynPattern>> {
-        let module = self.find_module(module_name)?;
-        Ok(self.create_pattern(target, module.base, module.size, max)?)
-    }
-
     /// Resolves multilevel pointer
     pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
         for &o in offsets {
