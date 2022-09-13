@@ -1,10 +1,8 @@
 #[cfg(unix)]
 fn main() {
-    use memflex::internal::find_module_by_name;
+    use memflex::external::ProcessIterator;
 
-    _ = dbg!(find_module_by_name("asdmaps"));
-
-    println!("{}", unsafe { libc::getpid() });
-
-    loop {}
+    for d in ProcessIterator::new().unwrap() {
+        dbg!(d.name);
+    }
 }

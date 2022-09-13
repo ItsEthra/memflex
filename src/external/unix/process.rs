@@ -1,8 +1,9 @@
-use crate::{sizeof, types::ModuleAdvancedInfo, Matcher, MfError};
+use crate::{sizeof, types::ModuleAdvancedInfo, Matcher, MfError, external::ProcessEntry};
 use core::{
     mem::zeroed,
     slice::{from_raw_parts, from_raw_parts_mut},
 };
+use std::fs;
 
 /// Represents a single process in the system.
 /// # Details
@@ -127,7 +128,7 @@ impl OwnedProcess {
 
     /// Returns an iterator over process's modules.
     pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleAdvancedInfo>> {
-        use std::{collections::HashMap, fs, path::PathBuf};
+        use std::{collections::HashMap, path::PathBuf};
 
         let s = fs::read_to_string(format!("/proc/{}/maps", self.0))
             .map_err(|_| MfError::ProcessNotFound)?;
@@ -208,5 +209,68 @@ impl OwnedProcess {
             Some(start + offset - 1)
         })
         .fuse()
+    }
+
+    /// Resolves multilevel pointer
+    pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
+        for &o in offsets {
+            base = self.read(base + o)?;
+        }
+
+        Ok(base)
+    }
+}
+
+/// Iterator over all processes in the system.
+pub struct ProcessIterator(Box<dyn Iterator<Item = ProcessEntry>>);
+
+impl ProcessIterator {
+    /// Creates new iterator over all processes in the system.
+    /// # Unix
+    /// Always returns Ok(I).
+    pub fn new() -> crate::Result<Self> {
+        let iter = fs::read_dir("/proc")
+            .unwrap()
+            .flatten()
+            .filter(|de|
+                de.file_type().map(|t| t.is_dir()).unwrap_or_default() &&
+                de.file_name().to_string_lossy().chars().all(|c| c.is_numeric())
+            )
+            .filter_map(|de| {
+                let id = de.file_name().to_string_lossy().parse::<u32>().unwrap();
+                let path = fs::read_to_string(format!("/proc/{id}/cmdline")).unwrap()
+                    .split_once('\0')?
+                    .0
+                    .to_owned();
+
+                if !path.contains('/') {
+                    return None;
+                }
+
+                Some((id, path))
+            })
+            .map(|(id, path)| {
+                ProcessEntry {
+                    path: path.clone(),
+                    name: path.rsplit_once('/').unwrap().1.to_owned(),
+                    parent_id: fs::read_to_string(format!("/proc/{id}/stat")).unwrap()
+                        .split(' ')
+                        .nth(3)
+                        .unwrap()
+                        .parse::<u32>()
+                        .unwrap(),
+                    id,
+                }
+            });
+
+        Ok(Self(Box::new(iter)))
+    }
+}
+
+impl Iterator for ProcessIterator {
+    type Item = ProcessEntry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
     }
 }

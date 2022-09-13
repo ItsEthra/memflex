@@ -447,28 +447,6 @@ impl Iterator for ProcessIterator {
     }
 }
 
-/// ProcessEntry contains information about process running in system
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub struct ProcessEntry {
-    pub id: u32,
-    pub parent_id: u32,
-    pub default_heap: usize,
-    pub thread_count: u32,
-    pub path: String,
-}
-
-impl ProcessEntry {
-    /// Opens process by the entry's process id.
-    pub fn open(
-        &self,
-        inherit_handle: bool,
-        access_rights: ProcessRights,
-    ) -> crate::Result<OwnedProcess> {
-        open_process_by_id(self.id, inherit_handle, access_rights)
-    }
-}
-
 impl From<&FfiProcessEntry> for ProcessEntry {
     fn from(pe: &FfiProcessEntry) -> Self {
         Self {
