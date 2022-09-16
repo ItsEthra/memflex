@@ -23,13 +23,57 @@ pub struct ProcessEntry {
     pub parent_id: u32,
 }
 
+#[cfg(windows)]
+use windows::Win32::System::Diagnostics::ToolHelp::PROCESSENTRY32W;
+
+#[cfg(windows)]
+impl ProcessEntry {
+    fn from(pe: &PROCESSENTRY32W) -> Option<Self> {
+        use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
+        use windows::Win32::Foundation::{BOOL, HANDLE};
+
+        #[link(name = "Psapi")]
+        extern "C" {
+            fn GetModuleFileNameExW(h: HANDLE, m: usize, file: *mut u16, size: u32) -> u32;
+        }
+
+        Some(Self {
+            id: pe.th32ProcessID,
+            parent_id: pe.th32ParentProcessID,
+            path: unsafe {
+                let mut path = [0u16; 260];
+
+                // @TODO: Fix becuase it doesn't work for some processes :/
+                GetModuleFileNameExW(
+                    OpenProcess(
+                        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                        BOOL(false as _),
+                        pe.th32ProcessID
+                    ).ok()?,
+                    0,
+                    path.as_mut_ptr(),
+                    260
+                );
+
+                String::from_utf16_lossy(&path)
+            },
+            name: String::from_utf16_lossy(unsafe {
+                crate::terminated_array(pe.szExeFile.as_ptr(), 0)
+            }),
+        })
+    }
+}
+
+#[cfg(windows)]
+use windows::Win32::System::Threading::PROCESS_ACCESS_RIGHTS;
+
 impl ProcessEntry {
     /// Opens process by the entry's process id.
     #[cfg(windows)]
     pub fn open(
         &self,
         inherit_handle: bool,
-        access_rights: ProcessRights,
+        access_rights: PROCESS_ACCESS_RIGHTS,
     ) -> crate::Result<OwnedProcess> {
         open_process_by_id(self.id, inherit_handle, access_rights)
     }

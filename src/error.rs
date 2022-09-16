@@ -33,12 +33,9 @@ impl crate::ptr::NullError for MfError {
 impl MfError {
     #[cfg(windows)]
     pub(crate) fn last<T>() -> Result<T> {
-        #[link(name = "kernel32")]
-        extern "C" {
-            fn GetLastError() -> u32;
-        }
+        use windows::Win32::Foundation::GetLastError;
 
-        Err(MfError::NtStatus(unsafe { GetLastError() }))
+        Err(MfError::NtStatus(unsafe { GetLastError().0 }))
     }
 
     #[cfg(unix)]

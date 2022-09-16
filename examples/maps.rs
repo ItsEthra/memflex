@@ -6,3 +6,12 @@ fn main() {
         dbg!(p);
     }
 }
+
+#[cfg(windows)]
+fn main() {
+    use memflex::external::ProcessIterator;
+
+    for p in ProcessIterator::new().unwrap() {
+        println!("{}", p.path);
+    }
+}

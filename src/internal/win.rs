@@ -1,9 +1,15 @@
-use crate::{types::win::KeyCode, DynPattern, Matcher};
+use windows::Win32::{
+    Foundation::HINSTANCE,
+    System::{
+        Console::{AllocConsole, FreeConsole},
+        LibraryLoader::FreeLibraryAndExitThread,
+    },
+};
 
 /// Searches for a module by its name.
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
-pub fn find_module_by_name(name: &str) -> Option<crate::types::ModuleBasicInfo> {
+pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasicInfo> {
     use crate::types::{win::Teb, ModuleBasicInfo};
 
     Teb::current()
@@ -45,38 +51,17 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
     })
 }
 
-extern "C" {
-    fn AllocConsole();
-    fn FreeConsole();
-    fn FreeLibraryAndExitThread(lib: usize, code: u32) -> !;
-}
-
-#[link(name = "user32")]
-extern "C" {
-    fn GetAsyncKeyState(key: KeyCode) -> u16;
-}
-
 /// Allocates new console.
-pub fn alloc_console() {
-    unsafe {
-        AllocConsole();
-    }
+pub fn alloc_console() -> bool {
+    unsafe { AllocConsole().as_bool() }
 }
 
 /// Frees the console.
-pub fn free_console() {
-    unsafe {
-        FreeConsole();
-    }
+pub fn free_console() -> bool {
+    unsafe { FreeConsole().as_bool() }
 }
 
 /// Frees the library and exits current thread.
 pub fn free_library_and_exit_thread(lib: usize, code: u32) -> ! {
-    unsafe { FreeLibraryAndExitThread(lib, code) }
-}
-
-/// Returns the state of the key
-/// Internally uses `GetAsyncKeyState`
-pub fn key_state(key: KeyCode) -> u16 {
-    unsafe { GetAsyncKeyState(key) }
+    unsafe { FreeLibraryAndExitThread(HINSTANCE(lib as _), code) }
 }

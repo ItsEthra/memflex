@@ -14,6 +14,8 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 
+use crate::terminated_array;
+
 /// Basic information about module
 #[derive(Debug, Clone, Copy)]
 #[cfg(feature = "internal")]
@@ -36,6 +38,18 @@ pub struct ModuleAdvancedInfo {
     pub name: String,
     /// Module's full path
     pub path: String,
+}
+
+#[cfg(windows)]
+impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for ModuleAdvancedInfo {
+    fn from(me: &windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W) -> Self {
+        Self {
+            base: me.modBaseAddr as _,
+            size: me.modBaseSize as _,
+            name: String::from_utf16_lossy(unsafe { terminated_array(me.szModule.as_ptr(), 0) }),
+            path: String::from_utf16_lossy(unsafe { terminated_array(me.szExePath.as_ptr(), 0) }),
+        }
+    }
 }
 
 /// General memory protection.

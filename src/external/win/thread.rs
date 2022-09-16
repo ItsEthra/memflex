@@ -1,53 +1,31 @@
-use super::CreateToolhelp32Snapshot;
-use crate::{
-    external::{Handle, NtResult},
-    types::win::ThreadRights,
-    MfError,
-};
+use windows::Win32::{Foundation::{HANDLE, CloseHandle, BOOL}, System::{Threading::{NtQueryInformationThread, THREADINFOCLASS, SuspendThread, ResumeThread, TerminateThread, GetThreadId, OpenThread, THREAD_ACCESS_RIGHTS}, Diagnostics::ToolHelp::{THREADENTRY32, CreateToolhelp32Snapshot, TH32CS_SNAPTHREAD, Thread32First, Thread32Next}}};
 use core::mem::{size_of, zeroed};
-
-#[link(name = "kernel32")]
-extern "C" {
-    fn Thread32First(hnd: isize, lpme: &mut FfiThreadEntry) -> bool;
-    fn Thread32Next(hnd: isize, lpme: &mut FfiThreadEntry) -> bool;
-    fn OpenThread(access: ThreadRights, inherit: i32, tid: u32) -> Handle;
-
-    fn SuspendThread(hnd: isize) -> u32;
-    fn ResumeThread(hnd: isize) -> u32;
-    fn TerminateThread(hnd: isize, code: u32) -> NtResult;
-
-    fn GetThreadId(hnd: isize) -> u32;
-}
-
-#[link(name = "ntdll")]
-extern "C" {
-    fn NtQueryInformationThread(
-        hnd: isize,
-        class: u32,
-        buf: *mut u8,
-        size: usize,
-        out: Option<&mut usize>,
-    ) -> NtResult;
-}
+use crate::MfError;
 
 /// Owned handle to a process's thread
-pub struct OwnedThread(Handle);
+pub struct OwnedThread(HANDLE);
 impl OwnedThread {
     /// Takes ownership of handle.
     /// # Safety
     /// Handle must not be used anywhere else.
-    pub unsafe fn from_handle(h: Handle) -> Self {
+    pub unsafe fn from_handle(h: HANDLE) -> Self {
         Self(h)
     }
 
     /// Gives away ownership of the process's handle.
-    pub fn into_handle(self) -> Handle {
+    pub fn into_handle(self) -> HANDLE {
         self.0
     }
 
     /// Closes handle to the thread.
     pub fn close(self) -> crate::Result<()> {
-        self.into_handle().close()
+        unsafe {
+            if CloseHandle(self.0).as_bool() {
+                Ok(())
+            } else {
+                MfError::last()
+            }
+        }
     }
 
     /// Returns the start address of the thread
@@ -55,20 +33,19 @@ impl OwnedThread {
         unsafe {
             let mut addr = 0;
             NtQueryInformationThread(
-                self.0 .0,
-                0x9,
+                self.0,
+                THREADINFOCLASS(0x9),
                 &mut addr as *mut usize as _,
-                size_of::<usize>(),
-                None,
-            )
-            .expect_zero(addr)
+                size_of::<usize>() as _,
+                0 as _,
+            ).map(|_| addr).map_err(|_| MfError::last::<()>().unwrap_err())
         }
     }
 
     /// Suspends thread
     pub fn suspend(&self) -> crate::Result<u32> {
         unsafe {
-            let i = SuspendThread(self.0 .0);
+            let i = SuspendThread(self.0);
             if i == u32::MAX {
                 MfError::last()
             } else {
@@ -80,7 +57,7 @@ impl OwnedThread {
     /// Resumes thread
     pub fn resume(&self) -> crate::Result<u32> {
         unsafe {
-            let i = ResumeThread(self.0 .0);
+            let i = ResumeThread(self.0);
             if i == u32::MAX {
                 MfError::last()
             } else {
@@ -91,24 +68,19 @@ impl OwnedThread {
 
     /// Terminates the thread with the specified code
     pub fn terminate(&self, exit_code: u32) -> crate::Result<()> {
-        unsafe { TerminateThread(self.0 .0, exit_code).expect_nonzero(()) }
+        unsafe {
+            if TerminateThread(self.0, exit_code).as_bool() {
+                Ok(())
+            } else {
+                MfError::last()
+            }
+        }
     }
 
     /// Returns the id of the thread
     pub fn id(&self) -> u32 {
-        unsafe { GetThreadId(self.0 .0) }
+        unsafe { GetThreadId(self.0) }
     }
-}
-
-#[repr(C)]
-struct FfiThreadEntry {
-    size: u32,
-    usage: u32,
-    tid: u32,
-    pid: u32,
-    base_pri: i32,
-    delta_pri: i32,
-    flags: u32,
 }
 
 /// Thread represents the thread in a process.
@@ -125,25 +97,25 @@ impl ThreadEntry {
     pub fn open(
         &self,
         inherit_handle: bool,
-        access_rights: ThreadRights,
+        access_rights: THREAD_ACCESS_RIGHTS,
     ) -> crate::Result<OwnedThread> {
         open_thread_by_id(self.id, inherit_handle, access_rights)
     }
 }
 
-impl From<&FfiThreadEntry> for ThreadEntry {
-    fn from(te: &FfiThreadEntry) -> Self {
+impl From<&THREADENTRY32> for ThreadEntry {
+    fn from(te: &THREADENTRY32) -> Self {
         Self {
-            id: te.tid,
-            base_priority: te.base_pri,
+            id: te.th32ThreadID,
+            base_priority: te.tpBasePri,
         }
     }
 }
 
 /// Iterator over threads in a process
 pub struct ThreadIterator {
-    h: Handle,
-    entry: FfiThreadEntry,
+    h: HANDLE,
+    entry: THREADENTRY32,
     stop: bool,
     pid: u32,
 }
@@ -152,33 +124,32 @@ impl ThreadIterator {
     /// Creates an iterator over threads in the process.
     pub fn new(process_id: u32) -> crate::Result<Self> {
         unsafe {
-            let h = CreateToolhelp32Snapshot(0x4, process_id);
-            if h.is_invalid() {
-                return MfError::last();
+            if let Ok(h) = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, process_id) {
+                let mut this = Self {
+                    h,
+                    entry: zeroed(),
+                    stop: false,
+                    pid: process_id,
+                };
+    
+                this.entry.dwSize = size_of::<THREADENTRY32>() as _;
+    
+                if !Thread32First(this.h, &mut this.entry).as_bool() {
+                    return MfError::last();
+                }
+    
+                while this.entry.th32OwnerProcessID != this.pid || this.stop {
+                    this.stop = !Thread32Next(this.h, &mut this.entry).as_bool();
+                }
+    
+                if this.stop {
+                    return Err(MfError::NoThreads);
+                }
+    
+                Ok(this)
+            } else {
+                MfError::last()
             }
-
-            let mut this = Self {
-                h,
-                entry: zeroed(),
-                stop: false,
-                pid: process_id,
-            };
-
-            this.entry.size = size_of::<FfiThreadEntry>() as _;
-
-            if !Thread32First(this.h.0, &mut this.entry) {
-                return MfError::last();
-            }
-
-            while this.entry.pid != this.pid || this.stop {
-                this.stop = !Thread32Next(this.h.0, &mut this.entry);
-            }
-
-            if this.stop {
-                return Err(MfError::NoThreads);
-            }
-
-            Ok(this)
         }
     }
 }
@@ -194,9 +165,9 @@ impl Iterator for ThreadIterator {
                 }
 
                 let current = ThreadEntry::from(&self.entry);
-                self.stop = !Thread32Next(self.h.0, &mut self.entry);
+                self.stop = !Thread32Next(self.h, &mut self.entry).as_bool();
 
-                if self.entry.pid == self.pid {
+                if self.entry.th32OwnerProcessID == self.pid {
                     break current;
                 }
             })
@@ -208,14 +179,17 @@ impl Iterator for ThreadIterator {
 pub fn open_thread_by_id(
     thread_id: u32,
     inherit_handle: bool,
-    access_rights: ThreadRights,
+    access_rights: THREAD_ACCESS_RIGHTS,
 ) -> crate::Result<OwnedThread> {
     unsafe {
-        let hnd = OpenThread(access_rights, inherit_handle as i32, thread_id);
-        if hnd.is_invalid() {
-            MfError::last()
+        if let Ok(h) = OpenThread(
+            access_rights,
+            BOOL(inherit_handle as _),
+            thread_id
+        ) {
+            Ok(OwnedThread(h))
         } else {
-            Ok(OwnedThread(hnd))
+            MfError::last()
         }
     }
 }

@@ -1,43 +1,21 @@
-use super::{open_process_by_id, CreateToolhelp32Snapshot, ProcessIterator, ThreadIterator};
-use crate::{external::Handle, terminated_array, types::win::ProcessRights, MfError};
+use super::{open_process_by_id, ProcessIterator, ThreadIterator};
+use crate::{types::ModuleAdvancedInfo, MfError};
 use core::mem::{size_of, zeroed};
-
-extern "C" {
-    fn Module32FirstW(hnd: isize, lpme: &mut FfiModuleEntry) -> bool;
-    fn Module32NextW(hnd: isize, lpme: &mut FfiModuleEntry) -> bool;
-}
-
-#[repr(C)]
-struct FfiModuleEntry {
-    size: u32,
-    module_id: u32,
-    process_id: u32,
-    glbl: u32,
-    proccnt: u32,
-    base: usize,
-    mod_size: u32,
-    hndl: usize,
-    name: [u16; 256],
-    path: [u16; 260],
-}
-
-impl From<&FfiModuleEntry> for ModuleAdvancedInfo {
-    fn from(me: &FfiModuleEntry) -> Self {
-        unsafe {
-            Self {
-                base: me.base,
-                size: me.mod_size as _,
-                name: String::from_utf16_lossy(terminated_array(me.name.as_ptr(), 0)),
-                path: String::from_utf16_lossy(terminated_array(me.path.as_ptr(), 0)),
-            }
-        }
-    }
-}
+use windows::Win32::{
+    Foundation::HANDLE,
+    System::{
+        Diagnostics::ToolHelp::{
+            CreateToolhelp32Snapshot, Module32FirstW, Module32NextW, MODULEENTRY32W,
+            TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32,
+        },
+        Threading::PROCESS_QUERY_INFORMATION,
+    },
+};
 
 /// Iterator over all modules in a process.
 pub struct ModuleIterator {
-    h: Handle,
-    entry: FfiModuleEntry,
+    h: HANDLE,
+    entry: MODULEENTRY32W,
     stop: bool,
 }
 
@@ -45,24 +23,24 @@ impl ModuleIterator {
     /// Creates new iterator over process's modules.
     pub fn new(process_id: u32) -> crate::Result<Self> {
         unsafe {
-            let h = CreateToolhelp32Snapshot(0x8 | 0x10, process_id);
-            if h.is_invalid() {
-                return MfError::last();
+            if let Ok(h) =
+                CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id)
+            {
+                let mut this = Self {
+                    h,
+                    entry: zeroed(),
+                    stop: false,
+                };
+                this.entry.dwSize = size_of::<MODULEENTRY32W>() as _;
+
+                if !Module32FirstW(this.h, &mut this.entry).as_bool() {
+                    return MfError::last();
+                }
+
+                Ok(this)
+            } else {
+                MfError::last()
             }
-
-            let mut this = Self {
-                h,
-                entry: zeroed(),
-                stop: false,
-            };
-
-            this.entry.size = size_of::<FfiModuleEntry>() as _;
-
-            if !Module32FirstW(this.h.0, &mut this.entry) {
-                return MfError::last();
-            }
-
-            Ok(this)
         }
     }
 }
@@ -75,9 +53,9 @@ impl Iterator for ModuleIterator {
             return None;
         }
 
-        let current = ModuleEntry::from(&self.entry);
+        let current = ModuleAdvancedInfo::from(&self.entry);
         unsafe {
-            self.stop = !Module32NextW(self.h.0, &mut self.entry);
+            self.stop = !Module32NextW(self.h, &mut self.entry).as_bool();
         }
         Some(current)
     }
@@ -94,8 +72,8 @@ pub fn processes() -> ProcessIterator {
 /// # Panics
 /// * If failed to open the process. Refer to [`open_process_by_id`].
 /// * If failed to create iterator over process's modules. Refer to [`ModuleIterator::new`]
-pub fn modules(process_id: u32) -> ModuleIterator {
-    open_process_by_id(process_id, false, ProcessRights::QUERY_INFORMATION)
+pub fn modules(process_id: u32) -> impl Iterator<Item = ModuleAdvancedInfo> {
+    open_process_by_id(process_id, false, PROCESS_QUERY_INFORMATION)
         .expect("Faild to open the process")
         .modules()
         .expect("Faild to create an iterator over process's modules")
@@ -106,7 +84,7 @@ pub fn modules(process_id: u32) -> ModuleIterator {
 /// * If failed to open the process. Refer to [`open_process_by_id`].
 /// * If failed to create iterator over process's threads. Refer to [`ThreadIterator::new`]
 pub fn threads(process_id: u32) -> ThreadIterator {
-    open_process_by_id(process_id, false, ProcessRights::QUERY_INFORMATION)
+    open_process_by_id(process_id, false, PROCESS_QUERY_INFORMATION)
         .expect("Faild to open the process")
         .threads()
         .expect("Faild to create an iterator over process's modules")
