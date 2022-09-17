@@ -243,6 +243,15 @@ impl OwnedProcess {
             .collect()
     }
 
+    /// Queryies protection for the specified address.
+    pub fn query(&self, address: usize) -> Protection {
+        self.maps()
+            .iter()
+            .find(|r| r.from <= address && r.to <= address)
+            .map(|r| r.prot)
+            .unwrap_or_default()
+    }
+
     /// Resolves multilevel pointer
     pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
         for &o in offsets {
@@ -333,7 +342,7 @@ pub fn find_process_by_name(name: &str) -> crate::Result<OwnedProcess> {
 
 /// Searches for the specified process by its id.
 pub fn find_process_by_id(id: u32) -> crate::Result<OwnedProcess> {
-    if fs::metadata(format!("/proc/{id}")).is_ok() {
+    if fs::metadata(format!("/proc/{id}")).is_err() {
         return Err(MfError::ProcessNotFound);
     }
 

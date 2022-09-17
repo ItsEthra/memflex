@@ -53,7 +53,7 @@ impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for Mo
 }
 
 /// General memory protection.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct Protection(pub u8);
 
