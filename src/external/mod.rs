@@ -29,8 +29,10 @@ use windows::Win32::System::Diagnostics::ToolHelp::PROCESSENTRY32W;
 #[cfg(windows)]
 impl ProcessEntry {
     fn from(pe: &PROCESSENTRY32W) -> Option<Self> {
-        use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
         use windows::Win32::Foundation::{BOOL, HANDLE};
+        use windows::Win32::System::Threading::{
+            OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
+        };
 
         #[link(name = "Psapi")]
         extern "C" {
@@ -48,11 +50,12 @@ impl ProcessEntry {
                     OpenProcess(
                         PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                         BOOL(false as _),
-                        pe.th32ProcessID
-                    ).ok()?,
+                        pe.th32ProcessID,
+                    )
+                    .ok()?,
                     0,
                     path.as_mut_ptr(),
-                    260
+                    260,
                 );
 
                 String::from_utf16_lossy(&path)

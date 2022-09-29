@@ -1,12 +1,8 @@
 use super::{ModuleIterator, OwnedThread, ThreadIterator};
-use crate::{
-    DynPattern, Matcher, MfError,
-    types::ModuleAdvancedInfo,
-    external::ProcessEntry,
-};
+use crate::{external::ProcessEntry, types::ModuleAdvancedInfo, DynPattern, Matcher, MfError};
 use core::mem::{size_of, transmute, zeroed};
 use windows::Win32::{
-    Foundation::{CloseHandle, HANDLE, BOOL},
+    Foundation::{CloseHandle, BOOL, HANDLE},
     System::{
         Diagnostics::{
             Debug::{ReadProcessMemory, WriteProcessMemory},
@@ -485,11 +481,7 @@ pub fn open_process_by_id(
     access_rights: PROCESS_ACCESS_RIGHTS,
 ) -> crate::Result<OwnedProcess> {
     unsafe {
-        if let Ok(h) = OpenProcess(
-            access_rights,
-            BOOL(inherit_handle as _),
-            id
-        ) {
+        if let Ok(h) = OpenProcess(access_rights, BOOL(inherit_handle as _), id) {
             Ok(OwnedProcess(h))
         } else {
             MfError::last()

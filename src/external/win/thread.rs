@@ -1,6 +1,17 @@
-use windows::Win32::{Foundation::{HANDLE, CloseHandle, BOOL}, System::{Threading::{NtQueryInformationThread, THREADINFOCLASS, SuspendThread, ResumeThread, TerminateThread, GetThreadId, OpenThread, THREAD_ACCESS_RIGHTS}, Diagnostics::ToolHelp::{THREADENTRY32, CreateToolhelp32Snapshot, TH32CS_SNAPTHREAD, Thread32First, Thread32Next}}};
-use core::mem::{size_of, zeroed};
 use crate::MfError;
+use core::mem::{size_of, zeroed};
+use windows::Win32::{
+    Foundation::{CloseHandle, BOOL, HANDLE},
+    System::{
+        Diagnostics::ToolHelp::{
+            CreateToolhelp32Snapshot, Thread32First, Thread32Next, TH32CS_SNAPTHREAD, THREADENTRY32,
+        },
+        Threading::{
+            GetThreadId, NtQueryInformationThread, OpenThread, ResumeThread, SuspendThread,
+            TerminateThread, THREADINFOCLASS, THREAD_ACCESS_RIGHTS,
+        },
+    },
+};
 
 /// Owned handle to a process's thread
 pub struct OwnedThread(HANDLE);
@@ -38,7 +49,9 @@ impl OwnedThread {
                 &mut addr as *mut usize as _,
                 size_of::<usize>() as _,
                 0 as _,
-            ).map(|_| addr).map_err(|_| MfError::last::<()>().unwrap_err())
+            )
+            .map(|_| addr)
+            .map_err(|_| MfError::last::<()>().unwrap_err())
         }
     }
 
@@ -131,21 +144,21 @@ impl ThreadIterator {
                     stop: false,
                     pid: process_id,
                 };
-    
+
                 this.entry.dwSize = size_of::<THREADENTRY32>() as _;
-    
+
                 if !Thread32First(this.h, &mut this.entry).as_bool() {
                     return MfError::last();
                 }
-    
+
                 while this.entry.th32OwnerProcessID != this.pid || this.stop {
                     this.stop = !Thread32Next(this.h, &mut this.entry).as_bool();
                 }
-    
+
                 if this.stop {
                     return Err(MfError::NoThreads);
                 }
-    
+
                 Ok(this)
             } else {
                 MfError::last()
@@ -182,11 +195,7 @@ pub fn open_thread_by_id(
     access_rights: THREAD_ACCESS_RIGHTS,
 ) -> crate::Result<OwnedThread> {
     unsafe {
-        if let Ok(h) = OpenThread(
-            access_rights,
-            BOOL(inherit_handle as _),
-            thread_id
-        ) {
+        if let Ok(h) = OpenThread(access_rights, BOOL(inherit_handle as _), thread_id) {
             Ok(OwnedThread(h))
         } else {
             MfError::last()
