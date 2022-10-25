@@ -3,7 +3,7 @@
 # Features
 * Checked pointers
 ```rust
-# use memflex::{Flow, Ptr};
+use memflex::{Flow, Ptr};
 pub struct StructWithPtr<'a> {
     pub thiscanbenull: Ptr<'a, u32>
 }
@@ -34,7 +34,7 @@ fn inner(other: Ptr<bool>) -> Flow<bool> {
 ```
 * Pattern matching
 ```rust
-# use memflex::{ida_pat, peid_pat};
+use memflex::{ida_pat, peid_pat};
 let ida = ida_pat!("13 ? D1");
 let peid = peid_pat!("13 ?? D1");
 
