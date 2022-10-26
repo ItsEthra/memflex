@@ -93,7 +93,7 @@ impl ProcessEntry {
 
 /// Represents a chunk of mapped memory in a process
 #[derive(Debug)]
-pub struct MappedRegion {
+pub struct MemoryRegion {
     /// Start
     pub from: usize,
     /// End

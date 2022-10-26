@@ -1,10 +1,9 @@
 #[cfg(unix)]
 fn main() {
-    use memflex::external::{find_process_by_id, find_process_by_name, ProcessIterator};
+    use memflex::{types::Protection, internal::{allocate, pid}};
 
-    for p in find_process_by_name("alacritty").unwrap().maps() {
-        dbg!(p);
-    }
+    dbg!(pid(), allocate(None, 0x2000, Protection::RWX));
+    loop {}
 }
 
 #[cfg(windows)]

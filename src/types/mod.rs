@@ -1,5 +1,5 @@
 mod vmt;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
 pub use vmt::*;
 mod tstr;
@@ -13,8 +13,6 @@ pub mod win;
 extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
-
-use crate::terminated_array;
 
 /// Basic information about module
 #[derive(Debug, Clone, Copy)]
@@ -60,13 +58,15 @@ pub struct Protection(pub u8);
 #[allow(missing_docs)]
 impl Protection {
     pub const NONE: Self = Self(0b000);
-    pub const R: Self = Self(0b100);
-    pub const RW: Self = Self(0b110);
-    pub const RWX: Self = Self(0b111);
+    pub const R: Self = Self(1 << 0);
+    pub const W: Self = Self(1 << 1);
+    pub const X: Self = Self(1 << 2);
+
+    pub const RW: Self = Self(0b011);
     pub const RX: Self = Self(0b101);
-    pub const W: Self = Self(0b010);
-    pub const WX: Self = Self(0b011);
-    pub const X: Self = Self(0b001);
+    pub const WX: Self = Self(0b110);
+    pub const RWX: Self = Self(0b111);
+
 }
 
 impl Protection {
@@ -91,9 +91,9 @@ impl Protection {
     /// Parses string of kind `r-x`.
     /// # Panics
     /// * `s.len()` isn't 3.
-    /// * s[0] != r | -
-    /// * s[1] != w | -
-    /// * s[2] != x | -
+    /// * s\[0\] != r | -
+    /// * s\[1\] != w | -
+    /// * s\[2\] != x | -
     pub fn parse(s: &str) -> Self {
         assert!(
             s.len() == 3
@@ -102,9 +102,9 @@ impl Protection {
                     .all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
         );
 
-        let val = ((s.as_bytes()[0] == b'r') as u8) << 2
+        let val = ((s.as_bytes()[0] == b'r') as u8) << 0
             | ((s.as_bytes()[1] == b'w') as u8) << 1
-            | (s.as_bytes()[2] == b'x') as u8;
+            | ((s.as_bytes()[2] == b'x') as u8) << 2;
 
         Self(val)
     }
@@ -113,6 +113,16 @@ impl Protection {
 #[test]
 fn test_parse_prot() {
     assert_eq!(Protection::RX, Protection::parse("r-x"));
+    assert_eq!(Protection::RW, Protection::parse("rw-"));
+    assert_eq!(Protection::NONE, Protection::parse("---"));
+}
+
+impl Not for Protection {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0 & 0b111)
+    }
 }
 
 impl BitOr for Protection {

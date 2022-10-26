@@ -1,5 +1,5 @@
 use crate::{
-    external::{MappedRegion, ProcessEntry},
+    external::{MemoryRegion, ProcessEntry},
     sizeof,
     types::{ModuleAdvancedInfo, Protection},
     Matcher, MfError,
@@ -225,7 +225,7 @@ impl OwnedProcess {
     }
 
     /// Returns an iterator over mapped regions in the process.
-    pub fn maps(&self) -> Vec<MappedRegion> {
+    pub fn maps(&self) -> Vec<MemoryRegion> {
         fs::read_to_string(format!("/proc/{}/maps", self.0))
             .unwrap()
             .lines()
@@ -238,7 +238,7 @@ impl OwnedProcess {
 
                 let prot = Protection::parse(&iter.next().unwrap()[0..3]);
 
-                MappedRegion { from, to, prot }
+                MemoryRegion { from, to, prot }
             })
             .collect()
     }
