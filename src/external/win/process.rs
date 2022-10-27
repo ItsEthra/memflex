@@ -313,43 +313,6 @@ impl OwnedProcess {
         Ok(self.find_pattern(pat, module.base as _, module.size))
     }
 
-    /// Creates a pattern for `target` making sure there are no other matches in range from `start` to `start + len`.
-    /// If `max` is set, function will abort if failed to find pattern in less than `max` bytes.
-    pub fn create_pattern(
-        &self,
-        target: usize,
-        start: usize,
-        len: usize,
-        max: Option<usize>,
-    ) -> crate::Result<Option<DynPattern>> {
-        let mut size = 3;
-        let mut offset = 0;
-
-        loop {
-            let mut pat = vec![0; size];
-            self.read_buf(target, &mut pat[..])?;
-
-            let mut done = true;
-            for oc in self.find_pattern(&pat[..], start + offset, len - offset) {
-                if oc != target {
-                    size += 1;
-                    offset = oc - start;
-                    done = false;
-
-                    if let Some(max) = max && size > max {
-                        return Ok(None);
-                    }
-
-                    break;
-                }
-            }
-
-            if done {
-                return Ok(Some(pat.as_slice().into()));
-            }
-        }
-    }
-
     /// Resolves multilevel pointer
     pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
         for &o in offsets {
