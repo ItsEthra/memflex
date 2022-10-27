@@ -102,7 +102,7 @@ impl Protection {
                     .all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
         );
 
-        let val = ((s.as_bytes()[0] == b'r') as u8) << 0
+        let val = (s.as_bytes()[0] == b'r') as u8
             | ((s.as_bytes()[1] == b'w') as u8) << 1
             | ((s.as_bytes()[2] == b'x') as u8) << 2;
 

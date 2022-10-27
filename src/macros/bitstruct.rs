@@ -12,7 +12,7 @@
 /// let s = SomeStruct { bits: 0b11011101 };
 /// // Bits:    | 1 1 0 1 1 | 1 0 1 |
 /// // Index:   | 7 6 5 4 3 | 2 1 0 |
-/// // Values:  | 3..=7     | 0..=2 |
+/// // Values:  |   3..=7   | 0..=2 |
 /// assert_eq!(s.first(), 0b101);
 /// assert_eq!(s.next(),  0b11011);
 /// ```

@@ -22,9 +22,7 @@ mod memory;
 pub use memory::*;
 
 #[cfg(feature = "nightly")]
-mod ptr;
-#[cfg(feature = "nightly")]
-pub use ptr::*;
+pub mod ptr;
 
 /// Some handy external API for interacting with the system
 #[cfg(feature = "external")]

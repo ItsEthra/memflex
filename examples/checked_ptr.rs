@@ -1,5 +1,5 @@
 #[cfg(feature = "nightly")]
-use memflex::Ptr;
+use memflex::ptr::Ptr;
 
 #[cfg(feature = "nightly")]
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
 
 #[cfg(feature = "nightly")]
 mod nightly {
-    use memflex::{Flow, Ptr};
+    use memflex::ptr::{Flow, Ptr};
 
     pub struct StructWithPtr<'a> {
         pub thiscanbenull: Ptr<'a, u32>,

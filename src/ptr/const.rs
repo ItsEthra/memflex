@@ -1,4 +1,4 @@
-use crate::Flow;
+use super::Flow;
 use core::{
     marker::PhantomData,
     ops::{ControlFlow, FromResidual, Try},

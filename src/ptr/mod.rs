@@ -1,3 +1,9 @@
+//! Checked pointers
+//!
+//! # Warning: Scuffed code ahead
+//! Most of this code was written as an experiment and do not qualify as "production-ready" in any
+//! sense(just as the rest of the library)
+
 mod r#const;
 pub use r#const::*;
 mod r#mut;

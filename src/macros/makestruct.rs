@@ -1,6 +1,6 @@
 use core::ops::{Deref, DerefMut};
 
-/// Emulates C++ parenting, with constrain that child may only has ONE parent.
+/// Emulates C++ parenting, with a constraint that a child may only has ONE parent.
 /// # Behavior
 /// * Each struct declared within `makestruct` macro will have C-like layout.
 /// * For each struct declared within `makestruct` macro with specified parent there will be generated:
@@ -120,6 +120,7 @@ macro_rules! makestruct {
 }
 
 /// Struct that is the parent for an other struct.
+/// # Safety
 /// This trait should not be implemented manually.
 pub unsafe trait Parent<C>: Sized
 where
@@ -141,6 +142,7 @@ where
 }
 
 /// Struct that is a child of the other struct.
+/// # Safety
 /// This trait should not be implemented manually.
 pub unsafe trait Child: Sized
 where

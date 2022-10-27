@@ -8,7 +8,7 @@
 /// pub struct ConcreteType(usize);
 ///
 /// memflex::interface! {
-///     pub trait IPlayer impl for ConcreteType/*, OtherTypes, ... */ {
+///     pub trait IPlayer impl for ConcreteType /*, OtherTypes, ... */ {
 ///         // Notice missing `&self`, this is intentional and macro will implicitly add it.
 ///         // Functions without `&self` in interface doesn't make much sense.
 ///         extern fn get_health() -> i32 = #0; // 0 - Index of the virtual function.

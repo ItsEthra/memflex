@@ -3,7 +3,7 @@
 # Features
 * Checked pointers
 ```rust
-use memflex::{Flow, Ptr};
+use memflex::ptr::{Flow, Ptr};
 pub struct StructWithPtr<'a> {
     pub thiscanbenull: Ptr<'a, u32>
 }

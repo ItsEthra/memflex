@@ -11,6 +11,7 @@ use core::{marker::PhantomData, mem::transmute, ops::Deref};
 /// memflex::function! {
 ///     extern fn CALLE(i32, i32) -> i32 = "file.exe"#0x1122;
 ///
+///     // Use `get_address_in_module` function to get the address duh
 ///     extern fn OTHER_FN(f32, bool) -> u64 = (get_address_in_module)"file.exe"#0x1122;
 ///
 ///     // Resolve by signature

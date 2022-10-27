@@ -2,7 +2,7 @@
 fn main() {
     use memflex::{types::Protection, internal::{allocate, pid}};
 
-    dbg!(pid(), allocate(None, 0x2000, Protection::RWX));
+    _ = dbg!(pid(), allocate(None, 0x2000, Protection::RWX));
     loop {}
 }
 
