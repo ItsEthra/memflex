@@ -1,7 +1,6 @@
 #![feature(let_chains)]
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
-#![cfg_attr(feature = "nightly", feature(try_trait_v2))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod macros;
@@ -20,9 +19,6 @@ pub use types::{TStr, VmtPtr};
 
 mod memory;
 pub use memory::*;
-
-#[cfg(feature = "nightly")]
-pub mod ptr;
 
 /// Some handy external API for interacting with the system
 #[cfg(feature = "external")]

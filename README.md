@@ -53,7 +53,7 @@ let module = memflex::internal::find_module_by_name("ntdll.dll");
 ```rust
 #[repr(C)]
 pub struct ConcreteType {
-    vmt: usize
+    vmt: VmtPtr
 };
 
 memflex::interface! {

@@ -17,16 +17,6 @@ pub enum MfError {
     NoThreads,
     /// String read was not valid UTF-8 or UTF-16 byte sequence
     InvalidString,
-    /// Value was null
-    #[cfg(feature = "nightly")]
-    Null,
-}
-
-#[cfg(feature = "nightly")]
-impl crate::ptr::NullError for MfError {
-    fn null() -> Self {
-        Self::Null
-    }
 }
 
 #[allow(dead_code)]

@@ -1,5 +1,5 @@
 use super::{ModuleIterator, OwnedThread, ThreadIterator};
-use crate::{external::ProcessEntry, types::ModuleAdvancedInfo, DynPattern, Matcher, MfError};
+use crate::{external::ProcessEntry, types::ModuleAdvancedInfo, Matcher, MfError};
 use core::mem::{size_of, transmute, zeroed};
 use windows::Win32::{
     Foundation::{CloseHandle, BOOL, HANDLE},
@@ -56,7 +56,7 @@ impl OwnedProcess {
                 address as _,
                 buf.as_mut_ptr() as _,
                 buf.len() as _,
-                &mut read as _,
+                Some(&mut read as _),
             )
             .as_bool()
             {
@@ -77,7 +77,7 @@ impl OwnedProcess {
                 address as _,
                 &mut buf as *mut T as _,
                 size_of::<T>() as _,
-                0 as _,
+                None,
             )
             .as_bool()
             {
@@ -122,7 +122,7 @@ impl OwnedProcess {
                 address as _,
                 buf.as_ptr() as _,
                 buf.len() as _,
-                &mut written,
+                Some(&mut written),
             )
             .as_bool()
             {
@@ -143,7 +143,7 @@ impl OwnedProcess {
                 address as _,
                 &value as *const T as _,
                 size_of::<T>() as _,
-                &mut written,
+                Some(&mut written),
             )
             .as_bool()
             {
@@ -190,7 +190,7 @@ impl OwnedProcess {
         unsafe {
             let addr = VirtualAllocEx(
                 self.0,
-                desired_address.unwrap_or_default() as _,
+                Some(desired_address.unwrap_or_default() as _),
                 size,
                 alloc_type,
                 protection,
@@ -233,12 +233,12 @@ impl OwnedProcess {
         unsafe {
             if let Ok(h) = CreateRemoteThread(
                 self.0,
-                0 as _,
+                None,
                 stack_size.unwrap_or_default(),
                 transmute(start_address),
-                param as _,
+                Some(param as _),
                 if suspended { 0x4 } else { 0 },
-                0 as _,
+                None,
             ) {
                 Ok(OwnedThread::from_handle(h))
             } else {
@@ -428,7 +428,7 @@ pub fn open_process_by_name(
 ) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
         .find_map(|pe| {
-            if pe.path.eq_ignore_ascii_case(name) {
+            if pe.path.contains(name) {
                 Some(pe.open(inherit_handle, access_rights))
             } else {
                 None

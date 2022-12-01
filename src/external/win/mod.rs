@@ -38,7 +38,7 @@ pub fn find_window(class_name: Option<&str>, window_name: Option<&str>) -> crate
 pub fn find_window_process_thread(hwnd: HWND) -> crate::Result<(u32, u32)> {
     unsafe {
         let mut pid = 0;
-        let tid = GetWindowThreadProcessId(hwnd, &mut pid);
+        let tid = GetWindowThreadProcessId(hwnd, Some(&mut pid));
         if tid == 0 {
             MfError::last()
         } else {

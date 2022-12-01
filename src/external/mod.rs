@@ -25,10 +25,13 @@ pub struct ProcessEntry {
 
 #[cfg(windows)]
 use windows::Win32::System::Diagnostics::ToolHelp::PROCESSENTRY32W;
+#[cfg(windows)]
+use windows::Win32::System::Threading::PROCESS_ACCESS_RIGHTS;
 
 #[cfg(windows)]
 impl ProcessEntry {
     fn from(pe: &PROCESSENTRY32W) -> Option<Self> {
+        use windows::Win32::Foundation::MAX_PATH;
         use windows::Win32::Foundation::{BOOL, HANDLE};
         use windows::Win32::System::Threading::{
             OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
@@ -43,7 +46,7 @@ impl ProcessEntry {
             id: pe.th32ProcessID,
             parent_id: pe.th32ParentProcessID,
             path: unsafe {
-                let mut path = [0u16; 260];
+                let mut path = [0u16; MAX_PATH as usize];
 
                 // @TODO: Fix becuase it doesn't work for some processes :/
                 GetModuleFileNameExW(
@@ -58,7 +61,7 @@ impl ProcessEntry {
                     260,
                 );
 
-                String::from_utf16_lossy(&path)
+                String::from_utf16_lossy(&path[..path.iter().position(|b| *b == 0).unwrap_or(MAX_PATH as usize - 1)])
             },
             name: String::from_utf16_lossy(unsafe {
                 crate::terminated_array(pe.szExeFile.as_ptr(), 0)
@@ -66,9 +69,6 @@ impl ProcessEntry {
         })
     }
 }
-
-#[cfg(windows)]
-use windows::Win32::System::Threading::PROCESS_ACCESS_RIGHTS;
 
 impl ProcessEntry {
     /// Opens process by the entry's process id.
