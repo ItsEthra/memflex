@@ -181,4 +181,3 @@ pub unsafe fn downcast<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
 pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
     P::downcast_mut(parent)
 }
-

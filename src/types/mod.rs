@@ -44,8 +44,12 @@ impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for Mo
         Self {
             base: me.modBaseAddr as _,
             size: me.modBaseSize as _,
-            name: String::from_utf16_lossy(unsafe { crate::terminated_array(me.szModule.as_ptr(), 0) }),
-            path: String::from_utf16_lossy(unsafe { crate::terminated_array(me.szExePath.as_ptr(), 0) }),
+            name: String::from_utf16_lossy(unsafe {
+                crate::terminated_array(me.szModule.as_ptr(), 0)
+            }),
+            path: String::from_utf16_lossy(unsafe {
+                crate::terminated_array(me.szExePath.as_ptr(), 0)
+            }),
         }
     }
 }
@@ -66,7 +70,6 @@ impl Protection {
     pub const RX: Self = Self(0b101);
     pub const WX: Self = Self(0b110);
     pub const RWX: Self = Self(0b111);
-
 }
 
 impl Protection {

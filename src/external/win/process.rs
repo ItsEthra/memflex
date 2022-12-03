@@ -15,9 +15,10 @@ use windows::Win32::{
             VirtualAllocEx, VirtualFreeEx, VirtualProtectEx, PAGE_PROTECTION_FLAGS,
             VIRTUAL_ALLOCATION_TYPE, VIRTUAL_FREE_TYPE,
         },
+        ProcessStatus::K32GetProcessImageFileNameW,
         Threading::{
             CreateRemoteThread, GetProcessId, OpenProcess, TerminateProcess, PROCESS_ACCESS_RIGHTS,
-        }, ProcessStatus::K32GetProcessImageFileNameW,
+        },
     },
 };
 
@@ -50,7 +51,10 @@ impl OwnedProcess {
         let mut image_name = [0; MAX_PATH as usize];
         unsafe {
             let size = K32GetProcessImageFileNameW(self.0, &mut image_name) as usize;
-            let last = image_name.iter().rposition(|c| char::decode_utf16([*c]).next() == Some(Ok('\\'))).unwrap_or(0);
+            let last = image_name
+                .iter()
+                .rposition(|c| char::decode_utf16([*c]).next() == Some(Ok('\\')))
+                .unwrap_or(0);
             String::from_utf16_lossy(&image_name[last + 1..size])
         }
     }

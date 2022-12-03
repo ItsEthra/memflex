@@ -1,6 +1,9 @@
 #[cfg(unix)]
 fn main() {
-    use memflex::{types::Protection, internal::{allocate, pid}};
+    use memflex::{
+        internal::{allocate, pid},
+        types::Protection,
+    };
 
     _ = dbg!(pid(), allocate(None, 0x2000, Protection::RWX));
     loop {}

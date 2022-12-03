@@ -61,7 +61,12 @@ impl ProcessEntry {
                     260,
                 );
 
-                String::from_utf16_lossy(&path[..path.iter().position(|b| *b == 0).unwrap_or(MAX_PATH as usize - 1)])
+                String::from_utf16_lossy(
+                    &path[..path
+                        .iter()
+                        .position(|b| *b == 0)
+                        .unwrap_or(MAX_PATH as usize - 1)],
+                )
             },
             name: String::from_utf16_lossy(unsafe {
                 crate::terminated_array(pe.szExeFile.as_ptr(), 0)

@@ -1,4 +1,7 @@
-use crate::{types::{ModuleBasicInfo, Protection}, MfError};
+use crate::{
+    types::{ModuleBasicInfo, Protection},
+    MfError,
+};
 use std::fs;
 
 /// Searches for a module by its name.
@@ -101,7 +104,7 @@ pub fn allocate(address: Option<usize>, len: usize, prot: Protection) -> crate::
             prot.0 as _,
             libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
             -1,
-            0
+            0,
         );
 
         if !addr.is_null() {
