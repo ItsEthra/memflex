@@ -2,7 +2,7 @@ use super::{ModuleIterator, OwnedThread, ThreadIterator};
 use crate::{external::ProcessEntry, types::ModuleAdvancedInfo, Matcher, MfError};
 use core::mem::{size_of, transmute, zeroed};
 use windows::Win32::{
-    Foundation::{CloseHandle, BOOL, HANDLE},
+    Foundation::{CloseHandle, BOOL, HANDLE, MAX_PATH},
     System::{
         Diagnostics::{
             Debug::{ReadProcessMemory, WriteProcessMemory},
@@ -17,7 +17,7 @@ use windows::Win32::{
         },
         Threading::{
             CreateRemoteThread, GetProcessId, OpenProcess, TerminateProcess, PROCESS_ACCESS_RIGHTS,
-        },
+        }, ProcessStatus::K32GetProcessImageFileNameW,
     },
 };
 
@@ -42,6 +42,16 @@ impl OwnedProcess {
             Ok(())
         } else {
             MfError::last()
+        }
+    }
+
+    /// Returns the name of the process
+    pub fn name(&self) -> String {
+        let mut image_name = [0; MAX_PATH as usize];
+        unsafe {
+            let size = K32GetProcessImageFileNameW(self.0, &mut image_name) as usize;
+            let last = image_name.iter().rposition(|c| char::decode_utf16([*c]).next() == Some(Ok('\\'))).unwrap_or(0);
+            String::from_utf16_lossy(&image_name[last + 1..size])
         }
     }
 
