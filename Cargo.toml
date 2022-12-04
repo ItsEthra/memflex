@@ -1,6 +1,6 @@
 [package]
 name = "memflex"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Memory hacking library"
 authors = ["ItsEthra"]
@@ -9,6 +9,10 @@ categories = ["os"]
 license = "MIT"
 repository = "https://github.com/ItsEthra/memflex"
 readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
 
 [features]
 default = ["std", "internal"]
