@@ -18,11 +18,20 @@ let peid = peid_pat!("13 ?? D1");
 let module = memflex::internal::find_module_by_name("ntdll.dll");
 // module.size, module.base
 ```
+* Read/Write external memory
+```rust
+#[cfg(windows)]
+if let Ok(p) = memflex::external::open_process_by_id(666, false, memflex::types::win::PROCESS_ALL_ACCESS) {
+    let value = p.read::<u32>(0x7FFF)?;
+    p.write(0x7FFF, 100_u32)?;
+}
+# Ok::<_, memflex::MfError>(())
+```
 * Macros for emulating C++ behavior
 ```rust
 #[repr(C)]
 pub struct ConcreteType {
-    vmt: VmtPtr
+    vmt: memflex::VmtPtr
 };
 
 memflex::interface! {
@@ -50,6 +59,8 @@ memflex::interface! {
     }
 }
 
+// Automatically wraps all structures in `#[repr(C)]`
+// Virtual functions with inheritence is not tested(probably doesnt work).
 memflex::makestruct! {
     // Attributes works as expected
     #[derive(Default)]
@@ -78,6 +89,7 @@ memflex::makestruct! {
 
     // By using `dyn ParentWithVmt`, child offsets all of their vfunc indices by the number of functions in `ParentWithVmt`,
     // should work with nested inheritance but hasn't been tested!
+    // This macro assumes msvc virtual parenting behavior when for each child a separate vmt is generated.
     struct ChildInheritsParentVmt impl ChildVmt(dyn ParentWithVmt) : pub ParentWithVmt {
         t3: u64,
         t4: i8
@@ -85,7 +97,7 @@ memflex::makestruct! {
 }
 
 memflex::global! {
-    // Uses default ldr resolver
+    // Uses default ldr resolver on windows
     pub static MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
 }
 
