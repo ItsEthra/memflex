@@ -87,7 +87,7 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
 /// Changes the protection of a memory region
 pub fn protect(address: usize, len: usize, prot: Protection) -> crate::Result<()> {
     unsafe {
-        if libc::mprotect(address as _, len, prot.0 as _) == 0 {
+        if libc::mprotect(address as _, len, prot.bits() as _) == 0 {
             Ok(())
         } else {
             MfError::last()
@@ -101,7 +101,7 @@ pub fn allocate(address: Option<usize>, len: usize, prot: Protection) -> crate::
         let addr = libc::mmap(
             address.unwrap_or(0) as _,
             len,
-            prot.0 as _,
+            prot.bits() as _,
             libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
             -1,
             0,

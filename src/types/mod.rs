@@ -57,13 +57,13 @@ bitflags::bitflags! {
     #[derive(Default)]
     pub struct Protection : u8 {
         /// Read
-        const R = 0b100;
+        const R = 0b001;
         /// Write
         const W = 0b010;
         /// Execute
-        const X = 0b001;
+        const X = 0b100;
         /// Read | Write
-        const RW = 0b110;
+        const RW = 0b011;
         /// Read | Execute
         const RX = 0b101;
         /// Read | Write | Execute

@@ -2,7 +2,10 @@
 name = "memflex"
 version = "0.1.0"
 edition = "2021"
+description = "Memory hacking library"
 authors = ["ItsEthra"]
+keywords = ["os", "memory", "hacking", "process"]
+categories = ["os"]
 license = "MIT"
 repository = "https://github.com/ItsEthra/memflex"
 readme = "README.md"
@@ -12,7 +15,7 @@ default = ["std", "internal"]
 std = ["alloc"]
 alloc = []
 internal = []
-external = []
+external = ["std"]
 
 [dependencies]
 memoffset = "0.6"

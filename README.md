@@ -4,6 +4,7 @@
 * Pattern matching
 ```rust
 use memflex::{ida_pat, peid_pat};
+// Pattern creation and parsing happens at compile time.
 let ida = ida_pat!("13 ? D1");
 let peid = peid_pat!("13 ?? D1");
 
@@ -25,7 +26,8 @@ if let Ok(p) = memflex::external::open_process_by_id(666, false, memflex::types:
     let value = p.read::<u32>(0x7FFF)?;
     p.write(0x7FFF, 100_u32)?;
 }
-# Ok::<_, memflex::MfError>(())
+
+Ok::<_, memflex::MfError>(())
 ```
 * Macros for emulating C++ behavior
 ```rust
@@ -119,6 +121,7 @@ memflex::bitstruct! {
     }
 }
 
+// Null terminated strings
 use memflex::types::TStr;
 let zero_terminated: TStr = memflex::tstr!("Hello, World!");
 ```
