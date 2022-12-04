@@ -1,5 +1,9 @@
 use super::{ModuleIterator, OwnedThread, ThreadIterator};
-use crate::{external::ProcessEntry, types::ModuleAdvancedInfo, Matcher, MfError};
+use crate::{
+    external::{MemoryRegion, ProcessEntry},
+    types::{ModuleAdvancedInfo, Protection},
+    Matcher, MfError,
+};
 use core::mem::{size_of, transmute, zeroed};
 use windows::Win32::{
     Foundation::{CloseHandle, BOOL, HANDLE, MAX_PATH},
@@ -12,7 +16,8 @@ use windows::Win32::{
             },
         },
         Memory::{
-            VirtualAllocEx, VirtualFreeEx, VirtualProtectEx, PAGE_PROTECTION_FLAGS,
+            VirtualAllocEx, VirtualFreeEx, VirtualProtectEx, VirtualQueryEx,
+            MEMORY_BASIC_INFORMATION, PAGE_NOACCESS, PAGE_PROTECTION_FLAGS,
             VIRTUAL_ALLOCATION_TYPE, VIRTUAL_FREE_TYPE,
         },
         ProcessStatus::K32GetProcessImageFileNameW,
@@ -44,6 +49,37 @@ impl OwnedProcess {
         } else {
             MfError::last()
         }
+    }
+
+    /// Returns current mapped memory regions.
+    // TODO(ItsEthra): I don't think it's acurate.
+    pub fn maps(&self) -> Vec<MemoryRegion> {
+        let mut maps = vec![];
+
+        unsafe {
+            let mut address = 0;
+            let mut info = MEMORY_BASIC_INFORMATION::default();
+            while VirtualQueryEx(
+                self.0,
+                Some(address as _),
+                &mut info,
+                size_of::<MEMORY_BASIC_INFORMATION>(),
+            ) > 0
+            {
+                address = info.BaseAddress as usize + info.RegionSize;
+                if info.AllocationProtect == PAGE_NOACCESS {
+                    continue;
+                }
+
+                maps.push(MemoryRegion {
+                    from: info.BaseAddress as _,
+                    to: address,
+                    prot: Protection::from_os(info.Protect).unwrap_or_default(),
+                });
+            }
+        }
+
+        maps
     }
 
     /// Returns the name of the process

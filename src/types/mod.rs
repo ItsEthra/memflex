@@ -1,6 +1,4 @@
 mod vmt;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
-
 pub use vmt::*;
 mod tstr;
 pub use tstr::*;
@@ -54,41 +52,42 @@ impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for Mo
     }
 }
 
-/// General memory protection.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct Protection(pub u8);
-
-#[allow(missing_docs)]
-impl Protection {
-    pub const NONE: Self = Self(0b000);
-    pub const R: Self = Self(1 << 0);
-    pub const W: Self = Self(1 << 1);
-    pub const X: Self = Self(1 << 2);
-
-    pub const RW: Self = Self(0b011);
-    pub const RX: Self = Self(0b101);
-    pub const WX: Self = Self(0b110);
-    pub const RWX: Self = Self(0b111);
+bitflags::bitflags! {
+    /// Protection of a memory region.
+    #[derive(Default)]
+    pub struct Protection : u8 {
+        /// Read
+        const R = 0b100;
+        /// Write
+        const W = 0b010;
+        /// Execute
+        const X = 0b001;
+        /// Read | Write
+        const RW = 0b110;
+        /// Read | Execute
+        const RX = 0b101;
+        /// Read | Write | Execute
+        const RWX = 0b111;
+    }
 }
 
 impl Protection {
     /// Can read?
     #[inline]
     pub fn read(&self) -> bool {
-        self.0 & Self::R.0 != 0
+        self.contains(Self::R)
     }
 
     /// Can write?
     #[inline]
     pub fn write(&self) -> bool {
-        self.0 & Self::W.0 != 0
+        self.contains(Self::W)
     }
 
     /// Can execute?
     #[inline]
     pub fn execute(&self) -> bool {
-        self.0 & Self::X.0 != 0
+        self.contains(Self::X)
     }
 
     /// Parses string of kind `r-x`.
@@ -105,67 +104,36 @@ impl Protection {
                     .all(|c| c == '-' || c == 'r' || c == 'w' || c == 'x')
         );
 
-        let val = (s.as_bytes()[0] == b'r') as u8
-            | ((s.as_bytes()[1] == b'w') as u8) << 1
-            | ((s.as_bytes()[2] == b'x') as u8) << 2;
+        let mut prot = Self::empty();
+        if s.as_bytes()[0] == b'r' {
+            prot |= Self::R;
+        }
 
-        Self(val)
+        if s.as_bytes()[1] == b'w' {
+            prot |= Self::W;
+        }
+
+        if s.as_bytes()[2] == b'x' {
+            prot |= Self::X;
+        }
+
+        prot
     }
-}
 
-#[test]
-fn test_parse_prot() {
-    assert_eq!(Protection::RX, Protection::parse("r-x"));
-    assert_eq!(Protection::RW, Protection::parse("rw-"));
-    assert_eq!(Protection::NONE, Protection::parse("---"));
-}
+    /// Converts from os protection type.
+    #[cfg(windows)]
+    pub fn from_os(value: windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS) -> Option<Self> {
+        use windows::Win32::System::Memory::{
+            PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE,
+        };
 
-impl Not for Protection {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        Self(!self.0 & 0b111)
-    }
-}
-
-impl BitOr for Protection {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        Self(self.0 | rhs.0)
-    }
-}
-
-impl BitOrAssign for Protection {
-    fn bitor_assign(&mut self, rhs: Self) {
-        self.0 |= rhs.0;
-    }
-}
-
-impl BitAnd for Protection {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        Self(self.0 & rhs.0)
-    }
-}
-
-impl BitAndAssign for Protection {
-    fn bitand_assign(&mut self, rhs: Self) {
-        self.0 &= rhs.0
-    }
-}
-
-impl BitXor for Protection {
-    type Output = Self;
-
-    fn bitxor(self, rhs: Self) -> Self::Output {
-        Self(self.0 ^ rhs.0)
-    }
-}
-
-impl BitXorAssign for Protection {
-    fn bitxor_assign(&mut self, rhs: Self) {
-        self.0 ^= rhs.0;
+        match value {
+            PAGE_NOACCESS => Some(Self::empty()),
+            PAGE_READONLY => Some(Self::R),
+            PAGE_READWRITE => Some(Self::RW),
+            PAGE_EXECUTE_READWRITE => Some(Self::RWX),
+            PAGE_EXECUTE_READ => Some(Self::RX),
+            _ => None,
+        }
     }
 }

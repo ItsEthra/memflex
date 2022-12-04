@@ -11,9 +11,8 @@ fn main() {
 
 #[cfg(windows)]
 fn main() {
-    use memflex::external::ProcessIterator;
+    use memflex::{external::open_process_by_id, types::win::PROCESS_ALL_ACCESS};
 
-    for p in ProcessIterator::new().unwrap() {
-        println!("{}", p.path);
-    }
+    let p = open_process_by_id(19076, false, PROCESS_ALL_ACCESS).unwrap();
+    dbg!(p.maps());
 }
