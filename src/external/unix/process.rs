@@ -26,20 +26,23 @@ impl OwnedProcess {
     }
 
     /// Returns full path to the process.
-    pub fn path(&self) -> String {
-        fs::read_link(format!("/proc/{}/exe", self.0))
-            .unwrap()
-            .to_string_lossy()
-            .into_owned()
+    /// `None` indicates the the process has died.
+    pub fn path(&self) -> Option<String> {
+        Some(
+            fs::read_link(format!("/proc/{}/exe", self.0))
+                .ok()?
+                .to_string_lossy()
+                .into_owned(),
+        )
     }
 
     /// Returns the name of the process
-    pub fn name(&self) -> String {
+    /// `None` indicates the the process has died.
+    pub fn name(&self) -> Option<String> {
         fs::read_link(format!("/proc/{}/exe", self.0))
-            .unwrap()
+            .ok()?
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_default()
     }
 
     /// Reads process memory, returning amount of bytes read.

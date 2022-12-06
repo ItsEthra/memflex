@@ -1,5 +1,11 @@
 # Memflex - Memory hacking library
 
+# Installation
+```toml
+[dependencies]
+memflex = "0.1.2"
+```
+
 # Features
 * Pattern matching
 ```rust

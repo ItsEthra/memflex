@@ -82,16 +82,21 @@ impl OwnedProcess {
         maps
     }
 
-    /// Returns the name of the process
-    pub fn name(&self) -> String {
+    /// Returns the name of the process.
+    /// `None` indicates the the process has died.
+    pub fn name(&self) -> Option<String> {
         let mut image_name = [0; MAX_PATH as usize];
         unsafe {
             let size = K32GetProcessImageFileNameW(self.0, &mut image_name) as usize;
+            if size == 0 {
+                return None;
+            }
+
             let last = image_name
                 .iter()
                 .rposition(|c| char::decode_utf16([*c]).next() == Some(Ok('\\')))
                 .unwrap_or(0);
-            String::from_utf16_lossy(&image_name[last + 1..size])
+            Some(String::from_utf16_lossy(&image_name[last + 1..size]))
         }
     }
 
