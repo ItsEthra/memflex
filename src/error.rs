@@ -17,6 +17,8 @@ pub enum MfError {
     NoThreads,
     /// String read was not valid UTF-8 or UTF-16 byte sequence
     InvalidString,
+    /// Process has died and is no longer available
+    ProcessDied,
 }
 
 #[allow(dead_code)]

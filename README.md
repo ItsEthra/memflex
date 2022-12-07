@@ -3,7 +3,7 @@
 # Installation
 ```toml
 [dependencies]
-memflex = "0.1.2"
+memflex = "0.2.0"
 ```
 
 # Features

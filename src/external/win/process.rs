@@ -53,7 +53,7 @@ impl OwnedProcess {
 
     /// Returns current mapped memory regions.
     // TODO(ItsEthra): I don't think it's acurate.
-    pub fn maps(&self) -> Vec<MemoryRegion> {
+    pub fn maps(&self) -> crate::Result<Vec<MemoryRegion>> {
         let mut maps = vec![];
 
         unsafe {
@@ -79,24 +79,23 @@ impl OwnedProcess {
             }
         }
 
-        maps
+        Ok(maps)
     }
 
     /// Returns the name of the process.
-    /// `None` indicates the the process has died.
-    pub fn name(&self) -> Option<String> {
+    pub fn name(&self) -> crate::Result<String> {
         let mut image_name = [0; MAX_PATH as usize];
         unsafe {
             let size = K32GetProcessImageFileNameW(self.0, &mut image_name) as usize;
             if size == 0 {
-                return None;
+                return Err(MfError::ProcessDied);
             }
 
             let last = image_name
                 .iter()
                 .rposition(|c| char::decode_utf16([*c]).next() == Some(Ok('\\')))
                 .unwrap_or(0);
-            Some(String::from_utf16_lossy(&image_name[last + 1..size]))
+            Ok(String::from_utf16_lossy(&image_name[last + 1..size]))
         }
     }
 

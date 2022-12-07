@@ -26,23 +26,20 @@ impl OwnedProcess {
     }
 
     /// Returns full path to the process.
-    /// `None` indicates the the process has died.
-    pub fn path(&self) -> Option<String> {
-        Some(
-            fs::read_link(format!("/proc/{}/exe", self.0))
-                .ok()?
-                .to_string_lossy()
-                .into_owned(),
-        )
+    pub fn path(&self) -> crate::Result<String> {
+        Ok(fs::read_link(format!("/proc/{}/exe", self.0))
+            .map_err(|_| MfError::ProcessDied)?
+            .to_string_lossy()
+            .into_owned())
     }
 
     /// Returns the name of the process
-    /// `None` indicates the the process has died.
-    pub fn name(&self) -> Option<String> {
-        fs::read_link(format!("/proc/{}/exe", self.0))
-            .ok()?
+    pub fn name(&self) -> crate::Result<String> {
+        Ok(fs::read_link(format!("/proc/{}/exe", self.0))
+            .map_err(|_| MfError::ProcessDied)?
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default())
     }
 
     /// Reads process memory, returning amount of bytes read.
@@ -147,7 +144,7 @@ impl OwnedProcess {
         use std::{collections::HashMap, path::PathBuf};
 
         let s = fs::read_to_string(format!("/proc/{}/maps", self.0))
-            .map_err(|_| MfError::ProcessNotFound)?;
+            .map_err(|_| MfError::ProcessDied)?;
         let mut maps: HashMap<String, (usize, usize)> = HashMap::new();
 
         for l in s.lines() {
@@ -194,7 +191,7 @@ impl OwnedProcess {
     }
 
     /// Finds all occurences of the pattern in a given range.
-    // @TODO: Can be optimized
+    // TODO: Can be optimized
     pub fn find_pattern<'a>(
         &'a self,
         pat: impl Matcher + 'a,
@@ -228,9 +225,9 @@ impl OwnedProcess {
     }
 
     /// Returns an iterator over mapped regions in the process.
-    pub fn maps(&self) -> Vec<MemoryRegion> {
-        fs::read_to_string(format!("/proc/{}/maps", self.0))
-            .unwrap()
+    pub fn maps(&self) -> crate::Result<Vec<MemoryRegion>> {
+        Ok(fs::read_to_string(format!("/proc/{}/maps", self.0))
+            .map_err(|_| MfError::ProcessDied)?
             .lines()
             .map(|l| {
                 let mut iter = l.split(' ');
@@ -243,16 +240,17 @@ impl OwnedProcess {
 
                 MemoryRegion { from, to, prot }
             })
-            .collect()
+            .collect())
     }
 
     /// Queryies protection for the specified address.
-    pub fn query(&self, address: usize) -> Protection {
-        self.maps()
+    /// `None` if no mappings were found for this address.
+    pub fn query(&self, address: usize) -> crate::Result<Option<Protection>> {
+        Ok(self
+            .maps()?
             .iter()
             .find(|r| r.from <= address && r.to <= address)
-            .map(|r| r.prot)
-            .unwrap_or_default()
+            .map(|r| r.prot))
     }
 
     /// Resolves multilevel pointer
