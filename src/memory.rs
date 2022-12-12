@@ -84,7 +84,7 @@ pub unsafe fn find_pattern(
     assert!(!start.is_null());
 
     from_raw_parts::<u8>(start, len)
-        .windows(pat.size())
+        .windows(pat.len())
         .enumerate()
         .filter_map(move |(i, bytes)| {
             if pat.matches(bytes) {

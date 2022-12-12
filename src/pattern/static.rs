@@ -30,6 +30,38 @@ const fn single(c: char) -> u8 {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Pattern<const N: usize>(pub(crate) [ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
+    fn to_ida_peid_style(&self, peid: bool) -> String {
+        self.0
+            .iter()
+            .map(|m| match m {
+                ByteMatch::Exact(b) => format!("{b:02X}"),
+                ByteMatch::Any => if peid { "??" } else { "?" }.into(),
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    /// Converts pattern to IDA style string.
+    pub fn to_ida_style(&self) -> String {
+        self.to_ida_peid_style(false)
+    }
+
+    /// Converts pattern to PEID style string.
+    pub fn to_peid_style(&self) -> String {
+        self.to_ida_peid_style(true)
+    }
+
+    /// Converts pattern to code style string, returing pattern and mask.
+    pub fn to_code_style(&self) -> (String, String) {
+        self.0
+            .iter()
+            .map(|m| match m {
+                ByteMatch::Exact(b) => (format!("\\x{b:02X}"), "x"),
+                ByteMatch::Any => ("?".into(), "?"),
+            })
+            .unzip::<_, _, String, String>()
+    }
+
     /// Checks if pattern matches byte slice.
     /// ```
     /// # use memflex::ida_pat;
@@ -114,6 +146,15 @@ impl<const N: usize> Pattern<N> {
     /// assert!(pat.matches(data));
     /// ```
     pub const fn from_code_style(pat: &'static [u8], mask: &'static str) -> Pattern<N> {
+        let mut j = 0;
+        while j < mask.len() {
+            if mask.as_bytes()[j] != b'x' && mask.as_bytes()[j] != b'?' {
+                panic!("Mask must only contain only `x` or `?`");
+            }
+
+            j += 1;
+        }
+
         let mut out = [ByteMatch::Any; N];
 
         let mut i = 0;
@@ -140,7 +181,7 @@ impl<const N: usize> Matcher for Pattern<N> {
         self.matches(seq)
     }
 
-    fn size(&self) -> usize {
+    fn len(&self) -> usize {
         N
     }
 }

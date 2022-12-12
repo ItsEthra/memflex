@@ -1,7 +1,5 @@
 mod r#static;
 pub use r#static::*;
-mod dynamic;
-pub use dynamic::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub(crate) enum ByteMatch {
@@ -24,22 +22,23 @@ mod sealed {
 }
 
 /// Trait for generalizing static & dynamic memory patterns.
+#[allow(clippy::len_without_is_empty)]
 pub trait Matcher: sealed::Sealed {
     /// Matches byte sequence agains the pattern
     fn matches(&self, seq: &[u8]) -> bool;
 
     /// Size of the pattern
-    fn size(&self) -> usize;
+    fn len(&self) -> usize;
 }
 
 impl<'a> sealed::Sealed for &'a [u8] {}
 
 impl<'a> Matcher for &'a [u8] {
     fn matches(&self, seq: &[u8]) -> bool {
-        self.iter().zip(seq.iter()).all(|(a, b)| a.eq(b))
+        seq.len() == self.len() && self.iter().zip(seq.iter()).all(|(a, b)| a.eq(b))
     }
 
-    fn size(&self) -> usize {
-        self.len()
+    fn len(&self) -> usize {
+        (*self as &[u8]).len()
     }
 }
