@@ -36,7 +36,7 @@ pub struct ModuleAdvancedInfo {
     pub path: String,
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "std"))]
 impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for ModuleAdvancedInfo {
     fn from(me: &windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W) -> Self {
         Self {
@@ -121,7 +121,7 @@ impl Protection {
     }
 
     /// Converts from os protection type.
-    #[cfg(windows)]
+    #[cfg(all(windows, feature = "std"))]
     pub fn from_os(value: windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS) -> Option<Self> {
         use windows::Win32::System::Memory::{
             PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE,

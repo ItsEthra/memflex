@@ -51,7 +51,7 @@ macro_rules! __resolve_by {
 }
 
 #[doc(hidden)]
-#[cfg(windows)]
+#[cfg(all(windows, feature = "std"))]
 pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
     use crate::internal::{find_module_by_name, find_pattern_in_module};
 
@@ -78,7 +78,7 @@ pub fn __default_resolver<const N: usize>(res: ResolveBy<N>) -> usize {
 #[doc(hidden)]
 #[cfg(not(windows))]
 pub fn __default_resolver<const N: usize>(_res: ResolveBy<N>) -> usize {
-    todo!()
+    unimplemented!()
 }
 
 #[doc(hidden)]
