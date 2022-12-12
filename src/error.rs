@@ -23,14 +23,14 @@ pub enum MfError {
 
 #[allow(dead_code)]
 impl MfError {
-    #[cfg(windows)]
+    #[cfg(all(windows, feature = "std"))]
     pub(crate) fn last<T>() -> Result<T> {
         use windows::Win32::Foundation::GetLastError;
 
         Err(MfError::NtStatus(unsafe { GetLastError().0 }))
     }
 
-    #[cfg(unix)]
+    #[cfg(all(unix, feature = "std"))]
     pub(crate) fn last<T>() -> Result<T> {
         unsafe { Err(MfError::Errno(*libc::__errno_location())) }
     }
@@ -46,4 +46,4 @@ impl Display for MfError {
 impl std::error::Error for MfError {}
 
 #[allow(missing_docs)]
-pub type Result<T> = std::result::Result<T, MfError>;
+pub type Result<T> = core::result::Result<T, MfError>;

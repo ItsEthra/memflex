@@ -1,3 +1,8 @@
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
+
 use super::{sealed, ByteMatch};
 use crate::Matcher;
 
@@ -30,6 +35,7 @@ const fn single(c: char) -> u8 {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Pattern<const N: usize>(pub(crate) [ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
+    #[cfg(feature = "alloc")]
     fn to_ida_peid_style(&self, peid: bool) -> String {
         self.0
             .iter()
@@ -42,16 +48,19 @@ impl<const N: usize> Pattern<N> {
     }
 
     /// Converts pattern to IDA style string.
+    #[cfg(feature = "alloc")]
     pub fn to_ida_style(&self) -> String {
         self.to_ida_peid_style(false)
     }
 
     /// Converts pattern to PEID style string.
+    #[cfg(feature = "alloc")]
     pub fn to_peid_style(&self) -> String {
         self.to_ida_peid_style(true)
     }
 
     /// Converts pattern to code style string, returing pattern and mask.
+    #[cfg(feature = "alloc")]
     pub fn to_code_style(&self) -> (String, String) {
         self.0
             .iter()
