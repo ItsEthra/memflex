@@ -129,6 +129,7 @@ where
     /// Casts parent to an immutable child reference
     /// # Safety
     /// There is no way of checking the actual type.
+    #[inline(always)]
     unsafe fn downcast(&self) -> &C {
         &*(self as *const Self as *const C)
     }
@@ -136,6 +137,7 @@ where
     /// Casts parent to a mutable child reference
     /// # Safety
     /// There is no way of checking the actual type.
+    #[inline(always)]
     unsafe fn downcast_mut(&mut self) -> &mut C {
         &mut *(self as *mut Self as *mut C)
     }
@@ -154,6 +156,7 @@ where
     /// Upcasts child to an immutable parent reference.
     /// # Safety
     /// Parent field must be the first.
+    #[inline(always)]
     unsafe fn upcast(&self) -> &Self::Parent {
         &*(self as *const Self as *const Self::Parent)
     }
@@ -161,23 +164,43 @@ where
     /// Upcasts child to a mutable parent reference.
     /// # Safety
     /// Parent field must be the first.
+    #[inline(always)]
     unsafe fn upcast_mut(&mut self) -> &mut Self::Parent {
         &mut *(self as *mut Self as *mut Self::Parent)
     }
 }
 
-/// Downcasts parent to an immutable child reference.
-/// # Safety
+// Methods below are just for convenience because in order to use methods declared in the trait, it
+// needs to be in the scope.
+
+/// Downcasts an immutable parent reference to an immutable child reference.
+/// # Unsafe
 /// See [`Parent::downcast`]
-#[inline]
-pub unsafe fn downcast<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
-    P::downcast(parent)
+#[inline(always)]
+pub fn downcast<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
+    unsafe { P::downcast(parent) }
 }
 
-/// Downcasts parent to a mutable child reference.
-/// # Safety
+/// Downcasts a mutable parent reference to a mutable child reference.
+/// # Unsafe
 /// See [`Parent::downcast_mut`]
-#[inline]
-pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
-    P::downcast_mut(parent)
+#[inline(always)]
+pub fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
+    unsafe { P::downcast_mut(parent) }
+}
+
+/// Upcasts an immutable child reference to an immutable parent reference.
+/// # Unsafe
+/// See [`Child::upcast`]
+#[inline(always)]
+pub fn upcast<P: Parent<C>, C: Child<Parent = P>>(child: &C) -> &P {
+    unsafe { child.upcast() }
+}
+
+/// Upcasts a mutable child reference to a mutable parent reference.
+/// # Unsafe
+/// See [`Child::upcast_mut`]
+#[inline(always)]
+pub fn upcast_mut<P: Parent<C>, C: Child<Parent = P>>(child: &mut C) -> &mut P {
+    unsafe { child.upcast_mut() }
 }
