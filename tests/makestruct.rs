@@ -79,7 +79,7 @@ mod inner {
     #[test]
     fn test_makestruct_multilevel() {
         let foo = Foo::default();
-        let quz: &Quz = unsafe { upcast_ref(&foo) };
+        let quz = unsafe { upcast_ref::<Quz, _>(&foo) };
         assert_eq!(quz.first, foo.first);
     }
 }

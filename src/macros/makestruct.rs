@@ -162,7 +162,7 @@ pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_ref<C: Child<Parent = P>, P: Parent<C>>(child: &C) -> &P {
+pub unsafe fn upcast_ref<P: Parent<C>, C: Child<Parent = P>>(child: &C) -> &P {
     &*(child as *const C as *const C::Parent)
 }
 
@@ -170,6 +170,6 @@ pub unsafe fn upcast_ref<C: Child<Parent = P>, P: Parent<C>>(child: &C) -> &P {
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_mut<C: Child<Parent = P>, P: Parent<C>>(child: &mut C) -> &mut P {
+pub unsafe fn upcast_mut<P: Parent<C>, C: Child<Parent = P>>(child: &mut C) -> &mut P {
     &mut *(child as *mut C as *mut C::Parent)
 }
