@@ -1,4 +1,4 @@
-use memflex::Child;
+use memflex::{downcast_ref, upcast_ref};
 
 memflex::makestruct! {
     #[derive(Debug, Default, PartialEq)]
@@ -29,8 +29,8 @@ fn test_parenting() {
     orig.d = -15;
 
     unsafe {
-        let parent = orig.upcast();
-        let child = memflex::downcast::<Bar, _>(parent);
+        let parent = upcast_ref(&orig);
+        let child = downcast_ref::<Bar, _>(parent);
         assert_eq!(child, &orig);
     }
 }

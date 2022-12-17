@@ -1,4 +1,4 @@
-use memflex::{downcast, upcast_mut};
+use memflex::{downcast_ref, upcast_mut};
 
 memflex::makestruct! {
     #[derive(Default)]
@@ -14,12 +14,14 @@ memflex::makestruct! {
 
 #[test]
 fn test_makestruct() {
-    let mut child = Child::default();
-    let parent = upcast_mut(&mut child);
-    parent.first = 5;
+    unsafe {
+        let mut child = Child::default();
+        let parent = upcast_mut(&mut child);
+        parent.first = 5;
 
-    assert_eq!(downcast::<Child, _>(parent).first, parent.first);
-    assert_eq!(child.first, child.parent.first);
+        assert_eq!(downcast_ref::<Child, _>(parent).first, parent.first);
+        assert_eq!(child.first, child.parent.first);
+    }
 }
 
 memflex::interface! {
@@ -55,7 +57,7 @@ fn test_makestruct_with_interface() {
 }
 
 mod inner {
-    use memflex::upcast;
+    use memflex::upcast_ref;
 
     memflex::makestruct! {
         #[derive(Default)]
@@ -77,7 +79,7 @@ mod inner {
     #[test]
     fn test_makestruct_multilevel() {
         let foo = Foo::default();
-        let quz: &Quz = upcast(&foo);
+        let quz: &Quz = unsafe { upcast_ref(&foo) };
         assert_eq!(quz.first, foo.first);
     }
 }

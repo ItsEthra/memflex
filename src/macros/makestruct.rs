@@ -126,21 +126,6 @@ pub unsafe trait Parent<C>: Sized
 where
     C: Child<Parent = Self>,
 {
-    /// Casts parent to an immutable child reference
-    /// # Safety
-    /// There is no way of checking the actual type.
-    #[inline(always)]
-    unsafe fn downcast(&self) -> &C {
-        &*(self as *const Self as *const C)
-    }
-
-    /// Casts parent to a mutable child reference
-    /// # Safety
-    /// There is no way of checking the actual type.
-    #[inline(always)]
-    unsafe fn downcast_mut(&mut self) -> &mut C {
-        &mut *(self as *mut Self as *mut C)
-    }
 }
 
 /// Struct that is a child of the other struct.
@@ -150,57 +135,41 @@ pub unsafe trait Child: Sized
 where
     Self: Deref<Target = Self::Parent> + DerefMut,
 {
-    /// Type parent
+    /// Parent type
     type Parent: Parent<Self>;
-
-    /// Upcasts child to an immutable parent reference.
-    /// # Safety
-    /// Parent field must be the first.
-    #[inline(always)]
-    unsafe fn upcast(&self) -> &Self::Parent {
-        &*(self as *const Self as *const Self::Parent)
-    }
-
-    /// Upcasts child to a mutable parent reference.
-    /// # Safety
-    /// Parent field must be the first.
-    #[inline(always)]
-    unsafe fn upcast_mut(&mut self) -> &mut Self::Parent {
-        &mut *(self as *mut Self as *mut Self::Parent)
-    }
 }
 
 // Methods below are just for convenience because in order to use methods declared in the trait, it
 // needs to be in the scope.
 
 /// Downcasts an immutable parent reference to an immutable child reference.
-/// # Unsafe
-/// See [`Parent::downcast`]
+/// # Safety
+/// There is no way of checking the actual type.
 #[inline(always)]
-pub fn downcast<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
-    unsafe { P::downcast(parent) }
+pub unsafe fn downcast_ref<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
+    &*(parent as *const P as *const C)
 }
 
 /// Downcasts a mutable parent reference to a mutable child reference.
-/// # Unsafe
-/// See [`Parent::downcast_mut`]
+/// # Safety
+/// There is no way of checking the actual type.
 #[inline(always)]
-pub fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
-    unsafe { P::downcast_mut(parent) }
+pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
+    &mut *(parent as *mut P as *mut C)
 }
 
 /// Upcasts an immutable child reference to an immutable parent reference.
-/// # Unsafe
-/// See [`Child::upcast`]
+/// # Safety
+/// Parent field must be the first.
 #[inline(always)]
-pub fn upcast<P: Parent<C>, C: Child<Parent = P>>(child: &C) -> &P {
-    unsafe { child.upcast() }
+pub unsafe fn upcast_ref<C: Child<Parent = P>, P: Parent<C>>(child: &C) -> &P {
+    &*(child as *const C as *const C::Parent)
 }
 
 /// Upcasts a mutable child reference to a mutable parent reference.
-/// # Unsafe
-/// See [`Child::upcast_mut`]
+/// # Safety
+/// Parent field must be the first.
 #[inline(always)]
-pub fn upcast_mut<P: Parent<C>, C: Child<Parent = P>>(child: &mut C) -> &mut P {
-    unsafe { child.upcast_mut() }
+pub unsafe fn upcast_mut<C: Child<Parent = P>, P: Parent<C>>(child: &mut C) -> &mut P {
+    &mut *(child as *mut C as *mut C::Parent)
 }
