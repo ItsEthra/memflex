@@ -1,6 +1,5 @@
-use std::mem::zeroed;
-
 use memflex::resolve_multilevel;
+use std::mem::zeroed;
 
 #[repr(C)]
 struct Mp1 {
