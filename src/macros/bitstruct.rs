@@ -43,7 +43,7 @@ macro_rules! bitstruct {
 
                 $(
                     $fvs fn $fname(&self) -> $int {
-                        (self.bits >> $from) & (<$int>::MAX >> (<$int>::BITS - ($to - $from + 1)))
+                        (self.bits >> $from) & !(!0 << ($to - $from + 1))
                     }
                 )*
             }
@@ -61,4 +61,25 @@ macro_rules! bitstruct {
             }
         )*
     };
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_bitstruct() {
+        crate::bitstruct! {
+            struct Foo : u8 {
+                a: 0..=4,
+                b: 5..=7,
+                c: 3..=3,
+                d: 4..=4,
+            }
+        }
+
+        let a = Foo::new(0b10101010);
+        assert_eq!(a.a(), 0b1010);
+        assert_eq!(a.b(), 0b101);
+        assert_eq!(a.c(), 1);
+        assert_eq!(a.d(), 0);
+    }
 }

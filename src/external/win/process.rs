@@ -33,6 +33,8 @@ pub struct OwnedProcess(HANDLE);
 
 impl OwnedProcess {
     /// Takes ownership of handle.
+    /// # Safety
+    /// Handle must not be used elsewhere.
     pub unsafe fn from_handle(h: HANDLE) -> Self {
         Self(h)
     }
@@ -162,7 +164,7 @@ impl OwnedProcess {
             offset += BUF_SIZE
         }
 
-        Ok(String::from_utf8(out).map_err(|_| MfError::InvalidString)?)
+        String::from_utf8(out).map_err(|_| MfError::InvalidString)
     }
 
     /// Writes buffer to the process memory, returning the amount of bytes written.
@@ -459,18 +461,12 @@ impl Iterator for ProcessIterator {
             return None;
         }
 
-        let pe = loop {
-            unsafe {
-                let current = ProcessEntry::from(&self.entry);
-                self.stop = !Process32NextW(self.h, &mut self.entry).as_bool();
+        unsafe {
+            let current = ProcessEntry::from(&self.entry);
+            self.stop = !Process32NextW(self.h, &mut self.entry).as_bool();
 
-                if current.is_some() {
-                    break current;
-                }
-            }
-        };
-
-        pe
+            return current;
+        }
     }
 }
 
@@ -482,7 +478,7 @@ pub fn open_process_by_name(
 ) -> crate::Result<OwnedProcess> {
     ProcessIterator::new()?
         .find_map(|pe| {
-            if pe.path.contains(name) {
+            if pe.name.contains(name) {
                 Some(pe.open(inherit_handle, access_rights))
             } else {
                 None

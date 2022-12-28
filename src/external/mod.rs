@@ -15,8 +15,6 @@ use crate::types::Protection;
 pub struct ProcessEntry {
     /// Id of the process.
     pub id: u32,
-    /// Path to the process execute.
-    pub path: String,
     /// Name of the process.
     pub name: String,
     /// Id of the parent process.
@@ -37,37 +35,9 @@ impl ProcessEntry {
             OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
         };
 
-        #[link(name = "Psapi")]
-        extern "C" {
-            fn GetModuleFileNameExW(h: HANDLE, m: usize, file: *mut u16, size: u32) -> u32;
-        }
-
         Some(Self {
             id: pe.th32ProcessID,
             parent_id: pe.th32ParentProcessID,
-            path: unsafe {
-                let mut path = [0u16; MAX_PATH as usize];
-
-                // @TODO: Fix becuase it doesn't work for some processes :/
-                GetModuleFileNameExW(
-                    OpenProcess(
-                        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                        BOOL(false as _),
-                        pe.th32ProcessID,
-                    )
-                    .ok()?,
-                    0,
-                    path.as_mut_ptr(),
-                    260,
-                );
-
-                String::from_utf16_lossy(
-                    &path[..path
-                        .iter()
-                        .position(|b| *b == 0)
-                        .unwrap_or(MAX_PATH as usize - 1)],
-                )
-            },
             name: String::from_utf16_lossy(unsafe {
                 crate::terminated_array(pe.szExeFile.as_ptr(), 0)
             }),

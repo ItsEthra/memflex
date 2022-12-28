@@ -284,18 +284,12 @@ impl ProcessIterator {
             })
             .filter_map(|de| {
                 let id = de.file_name().to_string_lossy().parse::<u32>().unwrap();
-                let path = fs::read_link(format!("/proc/{id}/exe"))
-                    .ok()?
-                    .to_string_lossy()
-                    .into_owned();
-
-                Some((id, path))
+                Some(id)
             })
-            .map(|(id, path)| ProcessEntry {
-                path: path.clone(),
+            .map(|id| ProcessEntry {
+                id,
                 name: path.rsplit_once('/').unwrap().1.to_owned(),
                 parent_id: hella_cringe(fs::read_to_string(format!("/proc/{id}/stat")).unwrap()),
-                id,
             });
 
         Ok(Self(Box::new(iter)))
