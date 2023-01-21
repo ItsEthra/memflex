@@ -470,6 +470,14 @@ impl Iterator for ProcessIterator {
     }
 }
 
+impl Drop for ProcessIterator {
+    fn drop(&mut self) {
+        unsafe {
+            CloseHandle(self.h);
+        }
+    }
+}
+
 /// Tried to open process by name
 pub fn open_process_by_name(
     name: &str,
