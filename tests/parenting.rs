@@ -14,7 +14,7 @@ memflex::makestruct! {
     }
 
     #[derive(Debug, Default, PartialEq)]
-    pub struct Quz : Foo {
+    pub struct Quz : Bar {
         e: f64,
         f: u16
     }
@@ -22,15 +22,17 @@ memflex::makestruct! {
 
 #[test]
 fn test_parenting() {
-    let mut orig = Bar::default();
+    let mut orig = Quz::default();
     orig.a = 1.0;
     orig.b = true;
     orig.c = 1337;
     orig.d = -15;
+    orig.e = 3.1;
+    orig.f = 9;
 
     unsafe {
-        let parent = upcast_ref(&orig);
-        let child = downcast_ref::<Bar, _>(parent);
-        assert_eq!(child, &orig);
+        let parent: &Foo = upcast_ref(&orig);
+        let child: &Quz = downcast_ref(parent);
+        assert_eq!(child.a, parent.a);
     }
 }

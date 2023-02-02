@@ -1,5 +1,3 @@
-use core::ops::{Deref, DerefMut};
-
 /// Emulates C++ parenting, with a constraint that a child may only has ONE parent.
 /// # Behavior
 /// * Each struct declared within `makestruct` macro will have C-like layout.
@@ -85,11 +83,10 @@ macro_rules! makestruct {
             }
 
             $(
-                unsafe impl $crate::Child for $sname {
-                    type Parent = $sparent;
-                }
-
+                unsafe impl $crate::Child<$sparent> for $sname { }
                 unsafe impl $crate::Parent<$sname> for $sparent { }
+                unsafe impl<O> $crate::Child<O> for $sname where O: $crate::Parent<$sparent> {}
+
             )?
 
             $(
@@ -122,22 +119,12 @@ macro_rules! makestruct {
 /// Struct that is the parent for an other struct.
 /// # Safety
 /// This trait should not be implemented manually.
-pub unsafe trait Parent<C>: Sized
-where
-    C: Child<Parent = Self>,
-{
-}
+pub unsafe trait Parent<C>: Sized {}
 
 /// Struct that is a child of the other struct.
 /// # Safety
 /// This trait should not be implemented manually.
-pub unsafe trait Child: Sized
-where
-    Self: Deref<Target = Self::Parent> + DerefMut,
-{
-    /// Parent type
-    type Parent: Parent<Self>;
-}
+pub unsafe trait Child<P>: Sized {}
 
 // Methods below are just for convenience because in order to use methods declared in the trait, it
 // needs to be in the scope.
@@ -146,7 +133,7 @@ where
 /// # Safety
 /// There is no way of checking the actual type.
 #[inline(always)]
-pub unsafe fn downcast_ref<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C {
+pub unsafe fn downcast_ref<P, C: Child<P>>(parent: &P) -> &C {
     &*(parent as *const P as *const C)
 }
 
@@ -154,7 +141,7 @@ pub unsafe fn downcast_ref<C: Child<Parent = P>, P: Parent<C>>(parent: &P) -> &C
 /// # Safety
 /// There is no way of checking the actual type.
 #[inline(always)]
-pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -> &mut C {
+pub unsafe fn downcast_mut<P, C: Child<P>>(parent: &mut P) -> &mut C {
     &mut *(parent as *mut P as *mut C)
 }
 
@@ -162,14 +149,14 @@ pub unsafe fn downcast_mut<C: Child<Parent = P>, P: Parent<C>>(parent: &mut P) -
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_ref<P: Parent<C>, C: Child<Parent = P>>(child: &C) -> &P {
-    &*(child as *const C as *const C::Parent)
+pub unsafe fn upcast_ref<C: Child<P>, P>(child: &C) -> &P {
+    &*(child as *const C as *const P)
 }
 
 /// Upcasts a mutable child reference to a mutable parent reference.
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_mut<P: Parent<C>, C: Child<Parent = P>>(child: &mut C) -> &mut P {
-    &mut *(child as *mut C as *mut C::Parent)
+pub unsafe fn upcast_mut<C: Child<P>, P>(child: &mut C) -> &mut P {
+    &mut *(&mut *child as *mut C as *mut P)
 }

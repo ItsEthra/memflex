@@ -52,9 +52,9 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// Resolves immutable multilevel pointer.
 /// # Safety
 /// * All offsets must lead to valid memory addresses.
-pub unsafe fn resolve_multilevel<T>(mut base: *const usize, offsets: &[usize]) -> *const T {
+pub unsafe fn resolve_multilevel<T>(mut base: *const u8, offsets: &[usize]) -> *const T {
     offsets.iter().for_each(|&o| {
-        base = base.cast::<u8>().add(o).cast::<usize>().read() as _;
+        base = base.add(o).cast::<usize>().read() as _;
     });
 
     base as _
@@ -63,9 +63,9 @@ pub unsafe fn resolve_multilevel<T>(mut base: *const usize, offsets: &[usize]) -
 /// Resolves mutable multilevel pointer.
 /// # Safety
 /// * All offsets must lead to valid memory addresses.
-pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut usize, offsets: &[usize]) -> *mut T {
+pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut u8, offsets: &[usize]) -> *mut T {
     offsets.iter().for_each(|&o| {
-        base = base.cast::<u8>().add(o).cast::<usize>().read() as _;
+        base = base.add(o).cast::<usize>().read() as _;
     });
 
     base as _
