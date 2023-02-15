@@ -37,7 +37,7 @@ macro_rules! function {
 
 /// Function that resolve its address on the first access.
 pub struct Function<F> {
-    cell: StaticCell<usize, fn() -> usize>,
+    cell: StaticCell<usize>,
     _ph: PhantomData<F>,
 }
 
@@ -52,7 +52,7 @@ impl<F> Function<F> {
 
     /// Force inits function
     pub fn force(&self) {
-        self.cell.init();
+        _ = self.cell.value();
     }
 }
 

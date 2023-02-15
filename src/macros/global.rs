@@ -5,7 +5,7 @@ use core::ops::{Deref, DerefMut};
 
 /// Global variable with explicitly defined offset.
 pub struct Global<T> {
-    cell: StaticCell<usize, fn() -> usize>,
+    cell: StaticCell<usize>,
     _ph: PhantomData<T>,
 }
 
@@ -25,7 +25,7 @@ impl<T> Global<T> {
 
     /// Force resolves the address.
     pub fn force(&self) {
-        self.cell.init();
+        _ = self.cell.value();
     }
 }
 
@@ -57,17 +57,17 @@ impl<T> DerefMut for Global<T> {
 ///
 /// memflex::global! {
 ///     // Uses default ldr resolver
-///     pub static MY_GLOBAL: i32 = "app.exe"#0xAABB;
+///     pub extern MY_GLOBAL: i32 = "app.exe"#0xAABB;
 ///
 ///     // Or use another function to get offset
-///     pub static HEALTH: f32 = (get_address_in_module)"app.exe"#0xFFEE;
+///     pub extern HEALTH: f32 = (get_address_in_module)"app.exe"#0xFFEE;
 /// }
 /// ```
 #[macro_export]
 macro_rules! global {
     {
         $(
-            $vs:vis static $gname:ident: $gtype:ty = $( ($resolver:ident) )? $module:literal $sep:tt $offset:expr;
+            $vs:vis extern $gname:ident: $gtype:ty = $( ($resolver:ident) )? $module:literal $sep:tt $offset:expr;
         )*
     } => {
         $(

@@ -56,11 +56,11 @@ impl VmtPtr {
         from_raw_parts(self.vmt, count)
     }
 
-    /// Returns a function pointer at index `N`.
+    /// Returns a function pointer at index `idx`.
     /// # Safety
-    /// * `T` must be a function pointer type
-    /// * `self` must be a valid pointer.
-    pub unsafe fn at<const N: usize, T: Copy>(&self) -> T {
-        self.vmt.add(N).cast::<T>().read()
+    /// * `T` must be a function pointer type.
+    /// * `self` must be a valid pointer to a virtual method table that contains at least `idx` elements.
+    pub unsafe fn at<T: Copy>(&self, idx: usize) -> T {
+        self.vmt.add(idx).cast::<T>().read()
     }
 }

@@ -1,40 +1,38 @@
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::cell::UnsafeCell;
 
-pub(crate) struct StaticCell<V, F: FnOnce() -> V + 'static + Send + Sync = fn() -> V> {
-    init: F,
-    value: Option<V>,
-    ready: AtomicBool,
+enum CellState<T> {
+    Pending(fn() -> T),
+    Ready(T),
 }
 
-impl<V, F: FnOnce() -> V + 'static + Send + Sync> StaticCell<V, F> {
-    pub const fn new(init: F) -> Self {
+pub(crate) struct StaticCell<T> {
+    state: UnsafeCell<CellState<T>>,
+}
+
+impl<T> StaticCell<T> {
+    pub const fn new(init: fn() -> T) -> Self {
         Self {
-            init,
-            value: None,
-            ready: AtomicBool::new(false),
+            state: UnsafeCell::new(CellState::Pending(init)),
         }
     }
 
-    #[allow(clippy::cast_ref_to_mut)]
     #[inline]
-    pub fn init(&self) {
+    pub fn value(&self) -> &T {
         unsafe {
-            let this = &mut *(self as *const Self as *mut Self);
-            let v = core::ptr::read(&this.init);
-            this.value = Some(v());
-        }
-    }
+            match self.state.get().as_ref().unwrap() {
+                CellState::Pending(ref init) => {
+                    let value = init();
+                    *self.state.get() = CellState::Ready(value);
 
-    #[inline]
-    pub fn value(&self) -> &V {
-        if !self.ready.load(Ordering::SeqCst) {
-            self.init();
-            self.ready.store(true, Ordering::SeqCst);
+                    self.value()
+                }
+                CellState::Ready(ref value) => value,
+            }
         }
-
-        self.value.as_ref().unwrap()
     }
 }
+
+unsafe impl<T> Sync for StaticCell<T> {}
 
 #[test]
 fn test_static_cell() {

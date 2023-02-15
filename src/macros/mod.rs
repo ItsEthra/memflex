@@ -11,8 +11,6 @@ pub use function::*;
 mod bitstruct;
 pub use bitstruct::*;
 
-use crate::Pattern;
-
 pub(crate) mod cell;
 
 /// How to resolve static offsets
@@ -29,7 +27,7 @@ pub enum ResolveBy<const N: usize> {
         /// Module name
         module_name: &'static str,
         /// Ida pattern
-        pattern: Pattern<N>,
+        pattern: crate::Pattern<N>,
     },
 }
 
