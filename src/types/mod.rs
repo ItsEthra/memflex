@@ -15,7 +15,7 @@ use alloc::string::String;
 /// Basic information about module
 #[derive(Debug, Clone, Copy)]
 #[cfg(feature = "internal")]
-pub struct ModuleBasicInfo {
+pub struct ModuleInfo {
     /// Module's base
     pub base: *const u8,
     /// Module's size
@@ -25,28 +25,23 @@ pub struct ModuleBasicInfo {
 /// More information about module
 #[derive(Debug, Clone)]
 #[cfg(all(feature = "alloc", feature = "internal"))]
-pub struct ModuleAdvancedInfo {
+pub struct ModuleInfoWithName {
     /// Module's base
     pub base: *const u8,
     /// Module's size
     pub size: usize,
     /// Module's name
     pub name: String,
-    /// Module's full path
-    pub path: String,
 }
 
 #[cfg(all(windows, feature = "std"))]
-impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for ModuleAdvancedInfo {
+impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for ModuleInfoWithName {
     fn from(me: &windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W) -> Self {
         Self {
             base: me.modBaseAddr as _,
             size: me.modBaseSize as _,
             name: String::from_utf16_lossy(unsafe {
                 crate::terminated_array(me.szModule.as_ptr(), 0)
-            }),
-            path: String::from_utf16_lossy(unsafe {
-                crate::terminated_array(me.szExePath.as_ptr(), 0)
             }),
         }
     }
@@ -74,19 +69,19 @@ bitflags::bitflags! {
 impl Protection {
     /// Can read?
     #[inline]
-    pub fn read(&self) -> bool {
+    pub const fn read(&self) -> bool {
         self.contains(Self::R)
     }
 
     /// Can write?
     #[inline]
-    pub fn write(&self) -> bool {
+    pub const fn write(&self) -> bool {
         self.contains(Self::W)
     }
 
     /// Can execute?
     #[inline]
-    pub fn execute(&self) -> bool {
+    pub const fn execute(&self) -> bool {
         self.contains(Self::X)
     }
 
@@ -135,5 +130,22 @@ impl Protection {
             PAGE_EXECUTE_READ => Some(Self::RX),
             _ => None,
         }
+    }
+
+    #[cfg(unix)]
+    pub const fn to_os(&self) -> i32 {
+        let mut out = 0;
+
+        if self.read() {
+            out |= libc::PROT_READ;
+        }
+        if self.write() {
+            out |= libc::PROT_WRITE;
+        }
+        if self.execute() {
+            out |= libc::PROT_EXEC;
+        }
+
+        out
     }
 }

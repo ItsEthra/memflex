@@ -1,5 +1,5 @@
 use crate::{
-    types::{ModuleBasicInfo, Protection},
+    types::{ModuleInfo, Protection},
     MfError,
 };
 use std::fs;
@@ -8,7 +8,7 @@ use std::fs;
 /// # Behavior
 /// Iterates `/proc/self/maps` finiding maps that ends with `name`.
 /// Case sensetive.
-pub fn find_module_by_name(name: &str) -> Option<ModuleBasicInfo> {
+pub fn find_module_by_name(name: &str) -> Option<ModuleInfo> {
     let s = fs::read_to_string("/proc/self/maps").unwrap();
 
     let mut m_from = usize::MAX;
@@ -34,7 +34,7 @@ pub fn find_module_by_name(name: &str) -> Option<ModuleBasicInfo> {
     if m_to == 0 {
         None
     } else {
-        Some(ModuleBasicInfo {
+        Some(ModuleInfo {
             base: m_from as *const u8,
             size: m_to - m_from,
         })
@@ -43,8 +43,8 @@ pub fn find_module_by_name(name: &str) -> Option<ModuleBasicInfo> {
 
 #[cfg(feature = "alloc")]
 /// Returns an iterator over all modules in the process.
-pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
-    use crate::types::ModuleAdvancedInfo;
+pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
+    use crate::types::ModuleInfoWithName;
     use std::{collections::HashMap, path::PathBuf};
 
     let s = fs::read_to_string("/proc/self/maps").unwrap();
@@ -75,9 +75,8 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
 
     maps.into_iter().filter_map(|(k, (from, to))| {
         let path = PathBuf::from(k);
-        Some(ModuleAdvancedInfo {
+        Some(ModuleInfoWithName {
             name: path.file_name()?.to_string_lossy().into_owned(),
-            path: path.to_string_lossy().into_owned(),
             base: from as *const u8,
             size: to - from,
         })
@@ -87,7 +86,7 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
 /// Changes the protection of a memory region
 pub fn protect(address: usize, len: usize, prot: Protection) -> crate::Result<()> {
     unsafe {
-        if libc::mprotect(address as _, len, prot.bits() as _) == 0 {
+        if libc::mprotect(address as _, len, prot.to_os()) == 0 {
             Ok(())
         } else {
             MfError::last()
@@ -101,7 +100,7 @@ pub fn allocate(address: Option<usize>, len: usize, prot: Protection) -> crate::
         let addr = libc::mmap(
             address.unwrap_or(0) as _,
             len,
-            prot.bits() as _,
+            prot.to_os(),
             libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
             -1,
             0,

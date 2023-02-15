@@ -9,8 +9,8 @@ use windows::Win32::{
 /// Searches for a module by its name.
 /// # Behavior
 /// Function iteraters over ldr searches for module entry (ascii case insensetive).
-pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasicInfo> {
-    use crate::types::{win::Teb, ModuleBasicInfo};
+pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo> {
+    use crate::types::{win::Teb, ModuleInfo};
 
     Teb::current()
         .peb
@@ -24,7 +24,7 @@ pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasi
                     .zip(module_name.chars())
                     .all(|(a, b)| a.eq_ignore_ascii_case(&b))
             } {
-                Some(ModuleBasicInfo {
+                Some(ModuleInfo {
                     size: e.image_size as usize,
                     base: e.dll_base,
                 })
@@ -38,11 +38,11 @@ pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleBasi
 /// # Panics
 /// If any module's name or path contain invalid UTF-16 sequence
 #[cfg(feature = "alloc")]
-pub fn modules() -> impl Iterator<Item = crate::types::ModuleAdvancedInfo> {
-    use crate::types::{win::Teb, ModuleAdvancedInfo};
+pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
+    use crate::types::{win::Teb, ModuleInfoWithName};
 
     Teb::current().peb.ldr.iter().map(|e| unsafe {
-        ModuleAdvancedInfo {
+        ModuleInfoWithName {
             base: e.dll_base,
             size: e.image_size as usize,
             name: e.base_dll_name.to_string().unwrap(),

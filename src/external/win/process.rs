@@ -1,7 +1,7 @@
 use super::{ModuleIterator, OwnedThread, ThreadIterator};
 use crate::{
     external::{MemoryRegion, ProcessEntry},
-    types::{ModuleAdvancedInfo, Protection},
+    types::{ModuleInfoWithName, Protection},
     Matcher, MfError,
 };
 use core::mem::{size_of, transmute, zeroed};
@@ -309,7 +309,7 @@ impl OwnedProcess {
     }
 
     /// Returns an iterator over process's modules.
-    pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleAdvancedInfo>> {
+    pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleInfoWithName>> {
         ModuleIterator::new(self.id())
     }
 
@@ -319,7 +319,7 @@ impl OwnedProcess {
     }
 
     /// Searches for the module in the process.
-    pub fn find_module(&self, module_name: &str) -> crate::Result<ModuleAdvancedInfo> {
+    pub fn find_module(&self, module_name: &str) -> crate::Result<ModuleInfoWithName> {
         self.modules()?
             .find(|me| me.name.eq_ignore_ascii_case(module_name))
             .ok_or(MfError::ModuleNotFound)

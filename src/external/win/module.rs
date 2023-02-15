@@ -1,5 +1,5 @@
 use super::{open_process_by_id, ProcessIterator, ThreadIterator};
-use crate::{types::ModuleAdvancedInfo, MfError};
+use crate::{types::ModuleInfoWithName, MfError};
 use core::mem::{size_of, zeroed};
 use windows::Win32::{
     Foundation::HANDLE,
@@ -46,14 +46,14 @@ impl ModuleIterator {
 }
 
 impl Iterator for ModuleIterator {
-    type Item = ModuleAdvancedInfo;
+    type Item = ModuleInfoWithName;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.stop {
             return None;
         }
 
-        let current = ModuleAdvancedInfo::from(&self.entry);
+        let current = ModuleInfoWithName::from(&self.entry);
         unsafe {
             self.stop = !Module32NextW(self.h, &mut self.entry).as_bool();
         }
@@ -72,7 +72,7 @@ pub fn processes() -> ProcessIterator {
 /// # Panics
 /// * If failed to open the process. Refer to [`open_process_by_id`].
 /// * If failed to create iterator over process's modules. Refer to [`ModuleIterator::new`]
-pub fn modules(process_id: u32) -> impl Iterator<Item = ModuleAdvancedInfo> {
+pub fn modules(process_id: u32) -> impl Iterator<Item = ModuleInfoWithName> {
     open_process_by_id(process_id, false, PROCESS_QUERY_INFORMATION)
         .expect("Faild to open the process")
         .modules()

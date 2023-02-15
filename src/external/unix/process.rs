@@ -1,7 +1,7 @@
 use crate::{
     external::{MemoryRegion, ProcessEntry},
     sizeof,
-    types::{ModuleAdvancedInfo, Protection},
+    types::{ModuleInfoWithName, Protection},
     Matcher, MfError,
 };
 use core::{
@@ -140,7 +140,7 @@ impl OwnedProcess {
     }
 
     /// Returns an iterator over process's modules.
-    pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleAdvancedInfo>> {
+    pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleInfoWithName>> {
         use std::{collections::HashMap, path::PathBuf};
 
         let s = fs::read_to_string(format!("/proc/{}/maps", self.0))
@@ -172,9 +172,8 @@ impl OwnedProcess {
 
         Ok(maps.into_iter().filter_map(|(k, (from, to))| {
             let path = PathBuf::from(k);
-            Some(ModuleAdvancedInfo {
+            Some(ModuleInfoWithName {
                 name: path.file_name()?.to_string_lossy().into_owned(),
-                path: path.to_string_lossy().into_owned(),
                 base: from as *const u8,
                 size: to - from,
             })
@@ -184,7 +183,7 @@ impl OwnedProcess {
     /// Searches for the specified module in the process.
     /// # Case
     /// Search is done case insensetive.
-    pub fn find_module(&self, name: &str) -> crate::Result<ModuleAdvancedInfo> {
+    pub fn find_module(&self, name: &str) -> crate::Result<ModuleInfoWithName> {
         self.modules()?
             .find(|m| m.name.eq_ignore_ascii_case(name))
             .ok_or(MfError::ModuleNotFound)

@@ -15,7 +15,7 @@ use crate::Matcher;
 /// Looks up module by looking up RIP register.
 /// Can return `None` if the module was manually mapped and not linked in ldr.
 #[cfg(feature = "alloc")]
-pub fn current_module() -> Option<crate::types::ModuleAdvancedInfo> {
+pub fn current_module() -> Option<crate::types::ModuleInfoWithName> {
     let mut rip: usize;
     unsafe {
         core::arch::asm!("lea {}, [rip]", out(reg) rip);
