@@ -5,10 +5,14 @@ use crate::{
     Matcher, MfError,
 };
 use core::{
-    mem::zeroed,
+    mem::MaybeUninit,
     slice::{from_raw_parts, from_raw_parts_mut},
 };
-use std::fs;
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 /// Represents a single process in the system.
 /// # Details
@@ -71,24 +75,24 @@ impl OwnedProcess {
     /// Reads a value of type `T` at `address`.
     pub fn read<T>(&self, address: usize) -> crate::Result<T> {
         unsafe {
-            let mut buf: T = zeroed();
+            let mut buf: MaybeUninit<T> = MaybeUninit::uninit();
             self.read_buf(
                 address,
-                from_raw_parts_mut(&mut buf as *mut T as *mut u8, sizeof!(T)),
+                from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>() as _, sizeof!(T)),
             )?;
-            Ok(buf)
+            Ok(buf.assume_init())
         }
     }
 
     /// Reads zero terminated string at `address`.
     pub fn read_str(&self, address: usize) -> crate::Result<String> {
-        const BUF_SIZE: usize = 4;
+        const STRIDE: usize = 4;
 
         let mut out = vec![];
         let mut offset = 0;
 
         loop {
-            let buf = self.read::<[u8; BUF_SIZE]>(address + offset)?;
+            let buf = self.read::<[u8; STRIDE]>(address + offset)?;
 
             if let Some(i) = buf.iter().position(|b| *b == 0) {
                 out.extend_from_slice(&buf[..i]);
@@ -97,7 +101,7 @@ impl OwnedProcess {
                 out.extend_from_slice(&buf);
             }
 
-            offset += BUF_SIZE
+            offset += STRIDE
         }
 
         Ok(String::from_utf8(out).map_err(|_| MfError::InvalidString)?)
@@ -130,47 +134,58 @@ impl OwnedProcess {
     }
 
     /// Writes `value` at `address` in the process's memory, returning amount of bytes written.
-    pub fn write<T>(&self, address: usize, value: T) -> crate::Result<usize> {
+    pub fn write<T>(&self, address: usize, value: &T) -> crate::Result<usize> {
         unsafe {
             self.write_buf(
                 address,
-                from_raw_parts(&value as *const T as *const u8, sizeof!(T)),
+                from_raw_parts(value as *const T as *const u8, sizeof!(T)),
             )
         }
     }
 
     /// Returns an iterator over process's modules.
     pub fn modules(&self) -> crate::Result<impl Iterator<Item = ModuleInfoWithName>> {
-        use std::{collections::HashMap, path::PathBuf};
-
         let s = fs::read_to_string(format!("/proc/{}/maps", self.0))
             .map_err(|_| MfError::ProcessDied)?;
-        let mut maps: HashMap<String, (usize, usize)> = HashMap::new();
+
+        struct ModRange {
+            from: usize,
+            to: usize,
+        }
+
+        let mut maps: HashMap<String, ModRange> = HashMap::new();
 
         for l in s.lines() {
-            let map = l.split(' ').filter(|v| !v.is_empty()).collect::<Vec<_>>();
+            let map = l
+                .split_whitespace()
+                .filter(|v| !v.is_empty())
+                .collect::<Vec<_>>();
             if map.len() != 6 {
                 continue;
             }
 
-            let lib = map[5];
+            let libname = map[5];
+            let convert = |s: &str| usize::from_str_radix(s, 16).unwrap();
 
-            let (from, to) = map[0].split_once('-').unwrap();
-            let from = usize::from_str_radix(from, 16).unwrap();
-            let to = usize::from_str_radix(to, 16).unwrap();
+            let (from, to) = map[0]
+                .split_once('-')
+                .map(|(from, to)| (convert(from), convert(to)))
+                .unwrap();
 
-            if fs::metadata(lib).is_ok() {
-                let ent = maps.entry(lib.to_owned()).or_insert_with(|| (from, to));
+            if fs::metadata(libname).is_ok() {
+                let ent = maps
+                    .entry(libname.to_owned())
+                    .or_insert_with(|| ModRange { from, to });
 
-                if from < ent.0 {
-                    ent.0 = from;
-                } else if to > ent.1 {
-                    ent.1 = to;
+                if from < ent.from {
+                    ent.from = from;
+                } else if to > ent.to {
+                    ent.to = to;
                 }
             }
         }
 
-        Ok(maps.into_iter().filter_map(|(k, (from, to))| {
+        Ok(maps.into_iter().filter_map(|(k, ModRange { from, to })| {
             let path = PathBuf::from(k);
             Some(ModuleInfoWithName {
                 name: path.file_name()?.to_string_lossy().into_owned(),
@@ -223,6 +238,17 @@ impl OwnedProcess {
         .fuse()
     }
 
+    /// Searches for a pattern in the specified module.
+    pub fn find_pattern_in_module<'a>(
+        &'a self,
+        pat: impl Matcher + 'a,
+        mod_name: &str,
+    ) -> crate::Result<impl Iterator<Item = usize> + 'a> {
+        let module = self.find_module(mod_name)?;
+
+        Ok(self.find_pattern(pat, module.base as _, module.size))
+    }
+
     /// Returns an iterator over mapped regions in the process.
     pub fn maps(&self) -> crate::Result<Vec<MemoryRegion>> {
         Ok(fs::read_to_string(format!("/proc/{}/maps", self.0))
@@ -270,47 +296,46 @@ impl ProcessIterator {
     /// # Unix
     /// Always returns Ok(I).
     pub fn new() -> crate::Result<Self> {
+        fn get_parent_id(proc: &Path) -> u32 {
+            let status = fs::read_to_string(proc.join("status")).unwrap();
+
+            let parent_id = status
+                .lines()
+                .find_map(|l: &str| {
+                    if l.starts_with("PPid:") {
+                        l.split_once(':').map(|(_, tail)| tail.trim().to_owned())
+                    } else {
+                        None
+                    }
+                })
+                .map(|p| p.parse::<u32>().ok())
+                .flatten()
+                .unwrap();
+
+            parent_id
+        }
+
         let iter = fs::read_dir("/proc")
             .unwrap()
             .flatten()
-            .filter(|de| {
-                de.file_type().map(|t| t.is_dir()).unwrap_or_default()
-                    && de
-                        .file_name()
-                        .to_string_lossy()
-                        .chars()
-                        .all(|c| c.is_numeric())
-            })
-            .filter_map(|de| {
-                let id = de.file_name().to_string_lossy().parse::<u32>().unwrap();
-                Some(id)
-            })
-            .map(|id| ProcessEntry {
-                id,
-                name: path.rsplit_once('/').unwrap().1.to_owned(),
-                parent_id: hella_cringe(fs::read_to_string(format!("/proc/{id}/stat")).unwrap()),
+            .filter_map(|de| Some((de.file_name().to_str()?.parse::<u32>().ok()?, de)))
+            .filter_map(|(id, de)| {
+                let entry = de.path();
+
+                let path = fs::read_link(entry.join("exe")).ok()?;
+                let name = path.file_name()?.to_str()?.to_owned();
+                let parent_id = get_parent_id(&entry);
+
+                Some(ProcessEntry {
+                    id,
+                    name,
+                    path,
+                    parent_id,
+                })
             });
 
         Ok(Self(Box::new(iter)))
     }
-}
-
-// sigh, am i really this stupid?
-// I don't know how to make it better pls help me
-fn hella_cringe(mut stat: String) -> u32 {
-    let (from, to) = (stat.find('(').unwrap(), stat.find(')').unwrap());
-
-    // Example from /proc/id/stat
-    // 123 (Socket Process) 123 123
-    //            ^
-    //            |
-    // This is why I have severe depression
-    stat.drain(from..=(to + 1));
-    stat.split_whitespace()
-        .nth(2)
-        .unwrap()
-        .parse::<u32>()
-        .unwrap()
 }
 
 impl Iterator for ProcessIterator {

@@ -9,6 +9,7 @@ mod unix;
 pub use unix::*;
 
 use crate::types::Protection;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 /// Single process
@@ -17,6 +18,8 @@ pub struct ProcessEntry {
     pub id: u32,
     /// Name of the process.
     pub name: String,
+    /// Path to the process image.
+    pub path: PathBuf,
     /// Id of the parent process.
     pub parent_id: u32,
 }

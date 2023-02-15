@@ -2,7 +2,7 @@ static mut SOME_INT: i32 = 15;
 
 memflex::global! {
     // Offset could change if you compile the example
-    static GLOBAL_INT: i32 = "global_int.exe"#0x2B000;
+    extern GLOBAL_INT: i32 = "global_int.exe"#0x2B000;
 }
 
 fn main() {
