@@ -30,7 +30,6 @@ impl<T> Global<T> {
 }
 
 unsafe impl<T> Sync for Global<T> {}
-unsafe impl<T> Send for Global<T> {}
 
 impl<T> Deref for Global<T> {
     type Target = T;

@@ -33,7 +33,7 @@ use core::slice::from_raw_parts;
 ///
 /// # unsafe {
 /// let obj_flex: &ObjFlex = &*(obj as *const Obj as *const ObjFlex);
-/// assert_eq!(obj_flex.vmt.at::<1, extern fn(i32, i32) -> f32>() as usize, dummy2 as usize);
+/// assert_eq!(obj_flex.vmt.at::<extern fn(i32, i32) -> f32>(1) as usize, dummy2 as usize);
 /// # }
 /// ```
 #[repr(transparent)]

@@ -106,7 +106,7 @@ memflex::makestruct! {
 
 memflex::global! {
     // Uses default ldr resolver on windows
-    pub static MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
+    pub extern MY_GLOBAL: i32 = "ntdll.dll"#0x1000;
 }
 
 memflex::function! {
