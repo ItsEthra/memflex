@@ -46,7 +46,6 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
             base: e.dll_base,
             size: e.image_size as usize,
             name: e.base_dll_name.to_string().unwrap(),
-            path: e.full_dll_name.to_string().unwrap(),
         }
     })
 }
