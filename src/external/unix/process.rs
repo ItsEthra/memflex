@@ -329,7 +329,6 @@ impl ProcessIterator {
                 Some(ProcessEntry {
                     id,
                     name,
-                    path,
                     parent_id,
                 })
             });

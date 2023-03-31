@@ -9,7 +9,6 @@ mod unix;
 pub use unix::*;
 
 use crate::types::Protection;
-use std::path::PathBuf;
 
 #[derive(Debug)]
 /// Single process
@@ -18,8 +17,6 @@ pub struct ProcessEntry {
     pub id: u32,
     /// Name of the process.
     pub name: String,
-    /// Path to the process image.
-    pub path: PathBuf,
     /// Id of the parent process.
     pub parent_id: u32,
 }
@@ -32,12 +29,6 @@ use windows::Win32::System::Threading::PROCESS_ACCESS_RIGHTS;
 #[cfg(windows)]
 impl ProcessEntry {
     fn from(pe: &PROCESSENTRY32W) -> Option<Self> {
-        use windows::Win32::Foundation::MAX_PATH;
-        use windows::Win32::Foundation::{BOOL, HANDLE};
-        use windows::Win32::System::Threading::{
-            OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
-        };
-
         Some(Self {
             id: pe.th32ProcessID,
             parent_id: pe.th32ParentProcessID,
