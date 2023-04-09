@@ -84,7 +84,7 @@ impl Protection {
     }
 
     /// Converts to os protection type.
-    #[cfg(unix)]
+    #[cfg(all(unix, feature = "std"))]
     pub const fn to_os(&self) -> i32 {
         let mut out = 0;
 

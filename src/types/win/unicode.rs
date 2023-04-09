@@ -1,51 +1,58 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
-use core::{fmt::Debug, mem::size_of, slice::from_raw_parts};
-
 #[cfg(feature = "alloc")]
 use alloc::string::{FromUtf16Error, String};
+
+use core::{fmt::Debug, mem::size_of, slice::from_raw_parts};
 
 /// Unicode string in UTF-16 format
 #[derive(Debug)]
 #[repr(C)]
 pub struct UnicodeString {
-    length: u16,
-    capacity: u16,
-    buffer: *const u16,
+    len: u16,
+    cap: u16,
+    buf: *const u16,
 }
 
 impl UnicodeString {
+    /// Creates new unicode string from its components.
+    /// `len`, `cap` must be in bytes and `buf` must be available to read.
+    #[inline]
+    pub const fn new(len: u16, cap: u16, buf: *const u16) -> Self {
+        Self { len, cap, buf }
+    }
+
     /// Returns the length in UTF-16 characters of the string,
     /// although it returns [`usize`], maximum value for it is `u16::MAX`.
     #[inline]
     pub const fn len(&self) -> usize {
-        self.length as usize / size_of::<u16>()
+        self.len as usize / size_of::<u16>()
     }
 
     /// Checks if the string is empty
     #[inline]
     pub const fn is_empty(&self) -> bool {
-        self.length == 0
+        self.len == 0
     }
 
     /// Returns the length in bytes of the string,
     /// although it returns [`usize`], maximum value for it is `u16::MAX`.
     #[inline]
     pub const fn bytes_len(&self) -> usize {
-        self.length as usize
+        self.len as usize
     }
 
     /// Returns the allocated size or capacity of the string in bytes,
     /// although it returns [`usize`], maximum value for it is `u16::MAX`.
     #[inline]
     pub const fn capacity(&self) -> usize {
-        self.capacity as usize
+        self.cap as usize
     }
 
     /// Checks if the `buffer` pointer is zero.
     #[inline]
     pub fn is_null(&self) -> bool {
-        self.buffer.is_null()
+        self.buf.is_null()
     }
 
     /// Converts unicode string to a UTF-16 byte slice
@@ -53,7 +60,7 @@ impl UnicodeString {
     /// * [`UnicodeString`] must be a valid pointer
     #[inline]
     pub unsafe fn as_slice<'a>(&self) -> &'a [u16] {
-        from_raw_parts(self.buffer, self.len())
+        from_raw_parts(self.buf, self.len())
     }
 
     /// Tries to convert unicode string to UTF-8 without taking ownership.
