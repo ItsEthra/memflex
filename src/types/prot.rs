@@ -82,7 +82,21 @@ impl Protection {
             _ => None,
         }
     }
+    /// Converts to os protection type.
+    #[cfg(all(windows, feature = "std"))]
+    pub fn to_os(&self) -> windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS {
+        use windows::Win32::System::Memory::{
+            PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE,
+        };
 
+        match (self.read(), self.write(), self.execute()) {
+            (true, false, false) => PAGE_READONLY,        // Self::R
+            (true, false, true) => PAGE_EXECUTE_READ,     // Self::RX
+            (true, true, false) => PAGE_READWRITE,        // Self::RW
+            (true, true, true) => PAGE_EXECUTE_READWRITE, // Self:RWX
+            (false, _, _) => PAGE_NOACCESS,
+        }
+    }
     /// Converts to os protection type.
     #[cfg(all(unix, feature = "std"))]
     pub const fn to_os(&self) -> i32 {
