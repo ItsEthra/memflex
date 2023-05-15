@@ -99,3 +99,15 @@ impl UnicodeString {
         char::decode_utf16(self.as_slice().iter().cloned()).flatten()
     }
 }
+
+/// A literal Unicode string.
+#[macro_export]
+macro_rules! unicode_string {
+    ($str:literal) => {
+        $crate::types::win::UnicodeString::new(
+            ($str.len() * 2) as _,
+            ($str.len() * 2) as _,
+            windows::w!($str).0,
+        )
+    };
+}
