@@ -100,6 +100,16 @@ impl UnicodeString {
     }
 }
 
+impl PartialEq for UnicodeString {
+    fn eq(&self, other: &Self) -> bool {
+        if self.is_null() || other.is_null() || self.bytes_len() != other.bytes_len() {
+            false
+        } else {
+            unsafe { self.as_slice() == other.as_slice() }
+        }
+    }
+}
+
 /// A literal Unicode string.
 #[macro_export]
 macro_rules! unicode_string {
