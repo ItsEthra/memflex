@@ -117,7 +117,7 @@ macro_rules! unicode_string {
         $crate::types::win::UnicodeString::new(
             ($str.len() * 2) as _,
             ($str.len() * 2) as _,
-            obfstr::wide!($str).as_ptr() as _,
+            $crate::obfstr::wide!($str).as_ptr() as _,
         )
     };
 }
