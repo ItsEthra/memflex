@@ -1,6 +1,8 @@
+#[cfg(windows)]
 use memflex::{types::win::UnicodeString, unicode_string};
 
 #[test]
+#[cfg(windows)]
 fn test_unicode_macros() {
     const TEST_STRING: &'static str = "Memflex Unicode String";
     const UNICODE_STRING: UnicodeString = unicode_string!(TEST_STRING);
@@ -12,6 +14,7 @@ fn test_unicode_macros() {
 }
 
 #[test]
+#[cfg(windows)]
 fn test_unicode_equality() {
     const FIRST_STRING: UnicodeString = unicode_string!("Memflex Unicode String");
     const SECOND_STRING: UnicodeString = unicode_string!("Memflex");

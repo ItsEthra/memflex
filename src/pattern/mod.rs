@@ -17,21 +17,15 @@ impl ByteMatch {
     }
 }
 
-mod sealed {
-    pub trait Sealed {}
-}
-
 /// Trait for generalizing static & dynamic memory patterns.
 #[allow(clippy::len_without_is_empty)]
-pub trait Matcher: sealed::Sealed {
+pub trait Matcher {
     /// Matches byte sequence agains the pattern
     fn matches(&self, seq: &[u8]) -> bool;
 
     /// Size of the pattern
     fn len(&self) -> usize;
 }
-
-impl<'a> sealed::Sealed for &'a [u8] {}
 
 impl<'a> Matcher for &'a [u8] {
     fn matches(&self, seq: &[u8]) -> bool {

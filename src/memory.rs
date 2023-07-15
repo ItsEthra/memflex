@@ -52,23 +52,25 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// Resolves immutable multilevel pointer.
 /// # Safety
 /// * All offsets must lead to valid memory addresses.
+#[inline]
 pub unsafe fn resolve_multilevel<T>(mut base: *const u8, offsets: &[usize]) -> *const T {
     offsets.iter().for_each(|&o| {
         base = base.add(o).cast::<usize>().read() as _;
     });
 
-    base as _
+    base.cast()
 }
 
 /// Resolves mutable multilevel pointer.
 /// # Safety
 /// * All offsets must lead to valid memory addresses.
+#[inline]
 pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut u8, offsets: &[usize]) -> *mut T {
     offsets.iter().for_each(|&o| {
         base = base.add(o).cast::<usize>().read() as _;
     });
 
-    base as _
+    base.cast()
 }
 
 /// Searches for a pattern internally by start address and search length.

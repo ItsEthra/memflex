@@ -22,6 +22,7 @@ let peid = peid_pat!("13 ?? D1");
 ```
 * Module searching
 ```rust
+#[cfg(windows)]
 let module = memflex::internal::find_module_by_name("ntdll.dll");
 // module.size, module.base
 ```

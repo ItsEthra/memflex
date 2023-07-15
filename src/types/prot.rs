@@ -67,7 +67,7 @@ impl Protection {
     }
 
     /// Converts from os protection type.
-    #[cfg(all(windows, feature = "std"))]
+    #[cfg(windows)]
     pub fn from_os(value: windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS) -> Option<Self> {
         use windows::Win32::System::Memory::{
             PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE,
@@ -82,8 +82,9 @@ impl Protection {
             _ => None,
         }
     }
+
     /// Converts to os protection type.
-    #[cfg(all(windows, feature = "std"))]
+    #[cfg(windows)]
     pub fn to_os(&self) -> windows::Win32::System::Memory::PAGE_PROTECTION_FLAGS {
         use windows::Win32::System::Memory::{
             PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE,
@@ -97,21 +98,16 @@ impl Protection {
             (false, _, _) => PAGE_NOACCESS,
         }
     }
+
     /// Converts to os protection type.
-    #[cfg(all(unix, feature = "std"))]
+    #[cfg(unix)]
     pub const fn to_os(&self) -> i32 {
-        let mut out = 0;
+        self.bits() as i32
+    }
 
-        if self.read() {
-            out |= libc::PROT_READ;
-        }
-        if self.write() {
-            out |= libc::PROT_WRITE;
-        }
-        if self.execute() {
-            out |= libc::PROT_EXEC;
-        }
-
-        out
+    /// Converts from os protection type.
+    #[cfg(unix)]
+    pub const fn from_os(prot: i32) -> Self {
+        Self::from_bits_truncate(prot as u8)
     }
 }
