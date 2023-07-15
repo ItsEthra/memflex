@@ -83,10 +83,8 @@ macro_rules! makestruct {
             }
 
             $(
-                unsafe impl $crate::Child for $sname {
-                    type Parent = $sparent;
-                }
-                unsafe impl $crate::Parent<$sname> for $sparent { }
+                unsafe impl $crate::Child<$sparent> for $sname {}
+                unsafe impl $crate::Parent<$sname> for $sparent {}
 
             )?
 
@@ -125,10 +123,7 @@ pub unsafe trait Parent<C>: Sized {}
 /// Struct that is a child of the other struct.
 /// # Safety
 /// This trait should not be implemented manually.
-pub unsafe trait Child: Sized {
-    /// Parent of this struct.
-    type Parent: Parent<Self>;
-}
+pub unsafe trait Child<P>: Sized {}
 
 // Methods below are just for convenience because in order to use methods declared in the trait, it
 // needs to be in the scope.
@@ -137,7 +132,7 @@ pub unsafe trait Child: Sized {
 /// # Safety
 /// There is no way of checking the actual type.
 #[inline(always)]
-pub unsafe fn downcast_ref<P: Parent<C>, C: Child<Parent = P>>(parent: &P) -> &C {
+pub unsafe fn downcast_ref<P: Parent<C>, C: Child<P>>(parent: &P) -> &C {
     &*(parent as *const P as *const C)
 }
 
@@ -145,7 +140,7 @@ pub unsafe fn downcast_ref<P: Parent<C>, C: Child<Parent = P>>(parent: &P) -> &C
 /// # Safety
 /// There is no way of checking the actual type.
 #[inline(always)]
-pub unsafe fn downcast_mut<P: Parent<C>, C: Child<Parent = P>>(parent: &mut P) -> &mut C {
+pub unsafe fn downcast_mut<P: Parent<C>, C: Child<P>>(parent: &mut P) -> &mut C {
     &mut *(parent as *mut P as *mut C)
 }
 
@@ -153,7 +148,7 @@ pub unsafe fn downcast_mut<P: Parent<C>, C: Child<Parent = P>>(parent: &mut P) -
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_ref<C: Child<Parent = P>, P: Parent<C>>(child: &C) -> &P {
+pub unsafe fn upcast_ref<C: Child<P>, P: Parent<C>>(child: &C) -> &P {
     &*(child as *const C as *const P)
 }
 
@@ -161,6 +156,6 @@ pub unsafe fn upcast_ref<C: Child<Parent = P>, P: Parent<C>>(child: &C) -> &P {
 /// # Safety
 /// Parent field must be the first.
 #[inline(always)]
-pub unsafe fn upcast_mut<C: Child<Parent = P>, P: Parent<C>>(child: &mut C) -> &mut P {
+pub unsafe fn upcast_mut<C: Child<P>, P: Parent<C>>(child: &mut C) -> &mut P {
     &mut *(&mut *child as *mut C as *mut P)
 }
