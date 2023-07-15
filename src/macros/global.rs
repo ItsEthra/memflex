@@ -1,49 +1,59 @@
-use crate::cell::StaticCell;
 use core::marker::PhantomData;
 use core::mem::transmute;
 use core::ops::{Deref, DerefMut};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// Global variable with explicitly defined offset.
 pub struct Global<T> {
-    cell: StaticCell<usize>,
-    _ph: PhantomData<T>,
+    init: fn() -> usize,
+    value: AtomicUsize,
+    _pd: PhantomData<T>,
 }
 
 impl<T> Global<T> {
     #[doc(hidden)]
     pub const fn new(init: fn() -> usize) -> Self {
         Self {
-            _ph: PhantomData,
-            cell: StaticCell::new(init),
+            value: AtomicUsize::new(0),
+            init,
+            _pd: PhantomData,
         }
     }
 
     /// Returns the address of the global.
     pub fn address(&self) -> usize {
-        *self.cell.value()
+        let mut value = self.value.load(Ordering::Acquire);
+        if value == 0 {
+            value = (self.init)();
+            self.value.store(value, Ordering::Release);
+        }
+
+        value
     }
 
     /// Force resolves the address.
     pub fn force(&self) {
-        _ = self.cell.value();
+        _ = self.address();
     }
 }
-
-unsafe impl<T> Sync for Global<T> {}
 
 impl<T> Deref for Global<T> {
     type Target = T;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        unsafe { transmute(*self.cell.value()) }
+        let value = self.value.load(Ordering::Relaxed);
+        assert!(value != 0);
+        unsafe { transmute(value) }
     }
 }
 
 impl<T> DerefMut for Global<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { transmute(*self.cell.value()) }
+        let value = self.value.load(Ordering::Relaxed);
+        assert!(value != 0);
+        unsafe { transmute(value) }
     }
 }
 

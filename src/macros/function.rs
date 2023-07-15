@@ -1,5 +1,9 @@
-use crate::cell::StaticCell;
-use core::{marker::PhantomData, mem::transmute, ops::Deref};
+use core::{
+    marker::PhantomData,
+    mem::transmute,
+    ops::Deref,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 /// Creates a function defenition with explicitly defined offset from module or signature.
 /// ```
@@ -37,7 +41,8 @@ macro_rules! function {
 
 /// Function that resolve its address on the first access.
 pub struct Function<F> {
-    cell: StaticCell<usize>,
+    address: AtomicUsize,
+    init: fn() -> usize,
     _ph: PhantomData<F>,
 }
 
@@ -45,14 +50,26 @@ impl<F> Function<F> {
     #[doc(hidden)]
     pub const fn new(init: fn() -> usize) -> Self {
         Self {
+            address: AtomicUsize::new(0),
+            init,
             _ph: PhantomData,
-            cell: StaticCell::new(init),
         }
+    }
+
+    /// Returns function address
+    pub fn address(&self) -> usize {
+        let mut address = self.address.load(Ordering::Acquire);
+        if address == 0 {
+            address = (self.init)();
+            self.address.store(address, Ordering::Release);
+        }
+
+        address
     }
 
     /// Force inits function
     pub fn force(&self) {
-        _ = self.cell.value();
+        _ = self.address();
     }
 }
 
@@ -60,6 +77,7 @@ impl<F> Deref for Function<F> {
     type Target = F;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { transmute(self.cell.value()) }
+        self.force();
+        unsafe { transmute(self) }
     }
 }

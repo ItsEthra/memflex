@@ -4,14 +4,10 @@ mod makestruct;
 pub use makestruct::*;
 mod global;
 pub use global::*;
-mod strings;
-pub use strings::*;
 mod function;
 pub use function::*;
 mod bitstruct;
 pub use bitstruct::*;
-
-pub(crate) mod cell;
 
 /// How to resolve static offsets
 pub enum ResolveBy<const N: usize> {
