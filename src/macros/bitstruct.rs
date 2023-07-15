@@ -5,16 +5,23 @@
 ///         // Bits: 0, 1, 2
 ///         first: 0..=2,
 ///         // Bits: 3, 4, 5, 6, 7
-///         next: 3..=7,
+///         second: 3..=7,
 ///     }
 /// }
 ///
-/// let s = SomeStruct { bits: 0b11011101 };
+/// let mut s = SomeStruct { bits: 0b11011101 };
 /// // Bits:    | 1 1 0 1 1 | 1 0 1 |
 /// // Index:   | 7 6 5 4 3 | 2 1 0 |
-/// // Values:  |   3..=7   | 0..=2 |
+/// // Span:    |   3..=7   | 0..=2 |
+/// // Names:   |  Second   | First |
 /// assert_eq!(s.first(), 0b101);
-/// assert_eq!(s.next(),  0b11011);
+/// assert_eq!(s.second(),  0b11011);
+/// s.set_first(0b010);
+/// assert_eq!(s.first(), 0b010);
+/// assert_eq!(s.second(),  0b11011);
+/// s.set_second(0b10101);
+/// assert_eq!(s.second(), 0b10101);
+/// assert_eq!(s.first(), 0b010);
 /// ```
 #[macro_export]
 macro_rules! bitstruct {
@@ -35,6 +42,7 @@ macro_rules! bitstruct {
                 pub bits: $int
             }
 
+            #[allow(dead_code)]
             impl $sname {
                 /// Creates new bitstruct
                 pub fn new(bits: $int) -> Self {
@@ -44,6 +52,14 @@ macro_rules! bitstruct {
                 $(
                     $fvs fn $fname(&self) -> $int {
                         (self.bits >> $from) & !(!0 << ($to - $from + 1))
+                    }
+
+                    $crate::paste! {
+                        $fvs fn [<set_ $fname>](&mut self, value: $int) {
+                            let mask: $int = !0 << $to - $from + 1;
+                            let v = mask.rotate_left($from);
+                            self.bits = (self.bits & v) | ((value & !mask) << $from);
+                        }
                     }
                 )*
             }

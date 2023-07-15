@@ -2,8 +2,6 @@
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use obfstr;
-
 mod macros;
 pub use macros::*;
 
@@ -42,3 +40,6 @@ macro_rules! bp {
 pub use bitflags::bitflags;
 pub use memoffset;
 pub use memoffset::offset_of;
+pub use obfstr;
+#[doc(hidden)]
+pub use paste::paste;
