@@ -5,6 +5,7 @@ mod game {
     struct FooVmt {
         idx0: extern "C" fn(&Foo) -> i32,
         idx1: extern "C" fn(&mut Foo, i32) -> i32,
+        idx2: extern "C" fn(&Foo) -> &i32,
     }
 
     #[repr(C)]
@@ -19,6 +20,7 @@ mod game {
                 vmt: &FooVmt {
                     idx0: Foo::get_health,
                     idx1: Foo::set_health,
+                    idx2: Foo::get_health_ref,
                 },
                 health: 100,
             }
@@ -35,6 +37,10 @@ mod game {
             self.health = new;
             old
         }
+
+        pub extern "C" fn get_health_ref(&self) -> &i32 {
+            &self.health
+        }
     }
 }
 
@@ -44,6 +50,7 @@ memflex::interface! {
     pub trait IFoo impl for CFoo {
         extern fn get_health() -> i32 = #0;
         extern fn set_health(new: i32) -> i32 = #1;
+        extern fn get_health_ref() -> &'this i32 = #2;
     }
 }
 
@@ -56,6 +63,6 @@ fn test_interface() {
         assert_eq!(this.get_health(), 100);
         assert_eq!(this.set_health(50), 100);
         assert_eq!(this.get_health(), 50);
-        assert_eq!(CFoo::FUNCTION_COUNT, 2);
+        assert_eq!(CFoo::FUNCTION_COUNT, 3);
     }
 }

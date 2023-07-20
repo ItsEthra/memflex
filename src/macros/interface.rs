@@ -70,9 +70,9 @@ macro_rules! __gen_func {
     (# [| $idx:expr], $(extern $($abi:literal)?)?, $fname:ident, ( $($arg_name:ident, $arg_ty:ty),* ), $($ret:ty)? ) => {
         $(extern $($abi)?)? fn $fname<'this>(&'this self, $($arg_name: $arg_ty),* ) $(-> $ret)? {
             unsafe {
-                type Fn = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
+                type Fn<'this> = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
 
-                ((**core::mem::transmute::<_, *const *const [Fn; $idx + 1]>(self))[Self::INDEX_OFFSET + $idx])(
+                ((**core::mem::transmute::<_, *const *const [Fn<'this>; $idx + 1]>(self))[Self::INDEX_OFFSET + $idx])(
                     self as *const Self as _,
                     $($arg_name),*
                 )
