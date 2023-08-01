@@ -40,10 +40,10 @@ impl<const N: usize> Pattern<N> {
         self.0
             .iter()
             .map(|m| match m {
-                ByteMatch::Exact(b) => format!("{b:02X}"),
+                ByteMatch::Exact(b) => alloc::format!("{b:02X}"),
                 ByteMatch::Any => if peid { "??" } else { "?" }.into(),
             })
-            .collect::<Vec<_>>()
+            .collect::<alloc::vec::Vec<_>>()
             .join(" ")
     }
 
@@ -65,7 +65,7 @@ impl<const N: usize> Pattern<N> {
         self.0
             .iter()
             .map(|m| match m {
-                ByteMatch::Exact(b) => (format!("\\x{b:02X}"), "x"),
+                ByteMatch::Exact(b) => (alloc::format!("\\x{b:02X}"), "x"),
                 ByteMatch::Any => ("?".into(), "?"),
             })
             .unzip::<_, _, String, String>()

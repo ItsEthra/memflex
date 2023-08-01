@@ -11,8 +11,6 @@ pub mod win;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(feature = "alloc")]
-use alloc::string::String;
 
 /// Basic information about module
 #[derive(Debug, Clone, Copy)]
@@ -33,7 +31,7 @@ pub struct ModuleInfoWithName {
     /// Module's size
     pub size: usize,
     /// Module's name
-    pub name: String,
+    pub name: alloc::string::String,
 }
 
 #[cfg(all(windows, feature = "std"))]
@@ -42,7 +40,7 @@ impl From<&windows::Win32::System::Diagnostics::ToolHelp::MODULEENTRY32W> for Mo
         Self {
             base: me.modBaseAddr as _,
             size: me.modBaseSize as _,
-            name: String::from_utf16_lossy(unsafe {
+            name: alloc::string::String::from_utf16_lossy(unsafe {
                 crate::terminated_array(me.szModule.as_ptr(), 0)
             }),
         }
