@@ -82,11 +82,18 @@ macro_rules! makestruct {
                 ),*
             }
 
-            $(
-                unsafe impl $crate::Child<$sparent> for $sname {}
-                unsafe impl $crate::Parent<$sname> for $sparent {}
+            impl $crate::Cast for $sname {}
+            #[allow(dead_code)]
+            impl $sname {
+                pub unsafe fn cast_ref<T: $crate::Cast>(&self) -> &T {
+                    unsafe { core::mem::transmute_copy::<&Self, &T>(&self) }
+                }
 
-            )?
+                pub unsafe fn cast_mut<T: $crate::Cast>(&mut self) -> &mut T {
+                    unsafe { core::mem::transmute_copy::<&mut Self, &mut T>(&self) }
+                }
+
+            }
 
             $(
                 $(
@@ -115,47 +122,6 @@ macro_rules! makestruct {
     };
 }
 
-/// Struct that is the parent for an other struct.
-/// # Safety
-/// This trait should not be implemented manually.
-pub unsafe trait Parent<C>: Sized {}
-
-/// Struct that is a child of the other struct.
-/// # Safety
-/// This trait should not be implemented manually.
-pub unsafe trait Child<P>: Sized {}
-
-// Methods below are just for convenience because in order to use methods declared in the trait, it
-// needs to be in the scope.
-
-/// Downcasts an immutable parent reference to an immutable child reference.
-/// # Safety
-/// There is no way of checking the actual type.
-#[inline(always)]
-pub unsafe fn downcast_ref<P: Parent<C>, C: Child<P>>(parent: &P) -> &C {
-    &*(parent as *const P as *const C)
-}
-
-/// Downcasts a mutable parent reference to a mutable child reference.
-/// # Safety
-/// There is no way of checking the actual type.
-#[inline(always)]
-pub unsafe fn downcast_mut<P: Parent<C>, C: Child<P>>(parent: &mut P) -> &mut C {
-    &mut *(parent as *mut P as *mut C)
-}
-
-/// Upcasts an immutable child reference to an immutable parent reference.
-/// # Safety
-/// Parent field must be the first.
-#[inline(always)]
-pub unsafe fn upcast_ref<C: Child<P>, P: Parent<C>>(child: &C) -> &P {
-    &*(child as *const C as *const P)
-}
-
-/// Upcasts a mutable child reference to a mutable parent reference.
-/// # Safety
-/// Parent field must be the first.
-#[inline(always)]
-pub unsafe fn upcast_mut<C: Child<P>, P: Parent<C>>(child: &mut C) -> &mut P {
-    &mut *(&mut *child as *mut C as *mut P)
-}
+/// Trait implemented for types made by `makestruct`.
+/// It's a marker trait to allow casting between structs created by the macro.
+pub trait Cast {}

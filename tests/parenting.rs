@@ -1,5 +1,3 @@
-use memflex::upcast_ref;
-
 memflex::makestruct! {
     #[derive(Debug, Default, PartialEq)]
     pub struct Foo {
@@ -30,8 +28,6 @@ fn test_parenting() {
     orig.e = 3.1;
     orig.f = 9;
 
-    unsafe {
-        let parent: &Foo = upcast_ref(&orig);
-        assert_eq!(orig.a, parent.a);
-    }
+    let parent: &Foo = unsafe { orig.cast_ref::<Foo>() };
+    assert_eq!(orig.a, parent.a);
 }
