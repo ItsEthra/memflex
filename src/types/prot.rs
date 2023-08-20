@@ -1,6 +1,6 @@
 bitflags::bitflags! {
     /// Protection of a memory region.
-    #[derive(Default)]
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
     pub struct Protection : u8 {
         /// Read
         const R = 0b001;
