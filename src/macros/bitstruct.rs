@@ -114,6 +114,38 @@ macro_rules! impl_int {
 }
 impl_int!(u8, u16, u32, u64, u128);
 
+/// Implement bitfields for an existing type.
+#[macro_export]
+macro_rules! bitfields {
+    {
+        $(
+            $target:ident.$field:ident: $int:ident {
+                $(
+                    $fvs:vis $fname:ident: $from:tt..=$to:tt
+                ),*$(,)?
+            }
+        )*
+    } => {
+        $(
+            impl $target {
+                $(
+                    $fvs fn $fname(&self) -> $crate::BitField<$int, {$from % 8}, {$to - $from + 1}> {
+                        let x = if $from % 8 == 0 && $from != 0 {
+                            $from / 8 + 1
+                        } else {
+                            $from / 8
+                        };
+                        let ptr = unsafe { core::ptr::addr_of!(self.$field).cast_mut().cast::<u8>().add(x) };
+
+                        unsafe { $crate::BitField::from_ptr(ptr) }
+
+                    }
+                )*
+            }
+        )*
+    };
+}
+
 /// Racy bitfield that provides `get`, `set` methods.
 pub struct BitField<I: BitInteger, const O: usize, const L: usize> {
     ptr: *mut u8,
@@ -176,8 +208,40 @@ mod tests {
         }
     }
 
+    struct Bar {
+        pad: u16,
+        bitfield: u8,
+    }
+
+    bitfields! {
+        Bar.bitfield: u8 {
+            a: 0..=3,
+            b: 4..=6,
+            c: 7..=7
+        }
+    }
+
     #[test]
     fn test_bitfield_macro() {
+        let bar = Bar {
+            pad: 0,
+            bitfield: 0b_1100_1010,
+        };
+        assert_eq!(bar.a().get(), 0b_1010);
+        assert_eq!(bar.b().get(), 0b_100);
+        assert_eq!(bar.c().as_bool(), true);
+        bar.a().set(0b_0011);
+        bar.b().set(0b_011);
+        bar.c().set_bool(false);
+        assert_eq!(bar.a().get(), 0b_0011);
+        assert_eq!(bar.b().get(), 0b_011);
+        assert_eq!(bar.c().as_bool(), false);
+        assert_eq!(bar.pad, 0);
+        assert_eq!(bar.bitfield, 0b_0011_0011);
+    }
+
+    #[test]
+    fn test_bitstruct_macro() {
         let foo = Foo::from_bits(0b_11111111_00001100);
         assert_eq!(foo.a().get(), 0b_1100);
         assert_eq!(foo.b().get(), 0b_1111_0000);
@@ -193,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bitfield_multi() {
+    fn test_bitstruct_multi() {
         let mut byte = 0b_11111111_00001100;
         let f1 = unsafe { BitField::<u16, 4, 8>::from_ptr(&mut byte as *mut _ as _) };
         let f2 = unsafe { BitField::<u16, 0, 4>::from_ptr(&mut byte as *mut _ as _) };
@@ -207,7 +271,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bitfield_bool() {
+    fn test_bitstruct_bool() {
         let mut byte = 0b_10101010;
         let f1 = unsafe { BitField::<u8, 3, 1>::from_ptr(&mut byte as *mut _ as _) };
         let f2 = unsafe { BitField::<u8, 4, 1>::from_ptr(&mut byte as *mut _ as _) };
