@@ -10,13 +10,13 @@ use core::marker::PhantomData;
 ///     }
 /// }
 ///
-/// let foo = Foo::from_bits(0b_1101_1101);
+/// let mut foo = Foo::from_bits(0b_1101_1101);
 /// assert_eq!(foo.a().get(), 0b_1101);
 /// assert_eq!(foo.b().get(), 0b_101);
 /// assert_eq!(foo.c().as_bool(), true);
-/// foo.a().set(0b_0110);
-/// foo.b().set(0b_101);
-/// foo.c().set_bool(false);
+/// foo.a_mut().set(0b_0110);
+/// foo.b_mut().set(0b_101);
+/// foo.c_mut().set_bool(false);
 /// assert_eq!(foo.a().get(), 0b_0110);
 /// assert_eq!(foo.b().get(), 0b_101);
 /// assert_eq!(foo.c().as_bool(), false);
@@ -54,7 +54,20 @@ macro_rules! bitstruct {
                 }
 
                 $(
-                    $fvs fn $fname(&self) -> $crate::BitField<$int, {$from % 8}, {$to - $from + 1}> {
+                    $crate::paste! {
+                        $fvs fn [<$fname _mut >]<'this>(&'this mut self) -> $crate::BitFieldMut<'this, $int, {$from % 8}, {$to - $from + 1}> {
+                            let x = if $from % 8 == 0 && $from != 0 {
+                                $from / 8 + 1
+                            } else {
+                                $from / 8
+                            };
+                            let ptr = unsafe { self.0.get().cast::<u8>().add(x) };
+
+                            unsafe { $crate::BitFieldMut::from_ptr(ptr) }
+                        }
+                    }
+
+                    $fvs fn $fname<'this>(&'this self) -> $crate::BitField<'this, $int, {$from % 8}, {$to - $from + 1}> {
                         let x = if $from % 8 == 0 && $from != 0 {
                             $from / 8 + 1
                         } else {
@@ -129,6 +142,21 @@ macro_rules! bitfields {
         $(
             impl $target {
                 $(
+                    $crate::paste! {
+                        $fvs fn [< $fname _mut >](&mut self) -> $crate::BitFieldMut<$int, {$from % 8}, {$to - $from + 1}> {
+                            let x = if $from % 8 == 0 && $from != 0 {
+                                $from / 8 + 1
+                            } else {
+                                $from / 8
+                            };
+                            let ptr = unsafe { core::ptr::addr_of!(self.$field).cast_mut().cast::<u8>().add(x) };
+
+                            unsafe { $crate::BitFieldMut::from_ptr(ptr) }
+
+                        }
+
+                    }
+
                     $fvs fn $fname(&self) -> $crate::BitField<$int, {$from % 8}, {$to - $from + 1}> {
                         let x = if $from % 8 == 0 && $from != 0 {
                             $from / 8 + 1
@@ -146,15 +174,50 @@ macro_rules! bitfields {
     };
 }
 
-/// Racy bitfield that provides `get`, `set` methods.
-pub struct BitField<I: BitInteger, const O: usize, const L: usize> {
-    ptr: *mut u8,
-    pd: PhantomData<I>,
+/// Immutable bitfield that provides `get` method.
+pub struct BitField<'r, I: BitInteger, const O: usize, const L: usize> {
+    ptr: *const u8,
+    pd: PhantomData<&'r I>,
 }
 
-impl<I: BitInteger, const O: usize, const L: usize> BitField<I, O, L> {
+impl<'r, I: BitInteger, const O: usize, const L: usize> BitField<'r, I, O, L> {
     /// Creates new BitField from a pointer.
-    pub const unsafe fn from_ptr(ptr: *mut u8) -> Self {
+    /// # Safety
+    /// * `ptr` must be valid for `2 * sizeof!(I)` bytes.
+    pub unsafe fn from_ptr(ptr: *const u8) -> Self {
+        Self {
+            pd: PhantomData,
+            ptr,
+        }
+    }
+
+    /// Returns the value of this bitfield.
+    #[inline]
+    pub fn get(&self) -> I {
+        let mut val = unsafe { self.ptr.cast::<I>().read_unaligned() };
+        val = val.shr(O).mask(L);
+        val
+    }
+}
+
+impl<I: BitInteger, const O: usize> BitField<'_, I, O, 1> {
+    /// Converts bitfield to a bool value.
+    #[inline]
+    pub fn as_bool(&self) -> bool {
+        unsafe { (self.ptr.read() >> O) & 1 != 0 }
+    }
+}
+/// Mutable bitfield that provides `get`, `set` methods.
+pub struct BitFieldMut<'r, I: BitInteger, const O: usize, const L: usize> {
+    ptr: *mut u8,
+    pd: PhantomData<&'r mut I>,
+}
+
+impl<'r, I: BitInteger, const O: usize, const L: usize> BitFieldMut<'r, I, O, L> {
+    /// Creates new BitField from a pointer.
+    /// # Safety
+    /// * `ptr` must be valid for `2 * sizeof!(I)` bytes.
+    pub unsafe fn from_ptr(ptr: *mut u8) -> Self {
         Self {
             pd: PhantomData,
             ptr,
@@ -178,7 +241,7 @@ impl<I: BitInteger, const O: usize, const L: usize> BitField<I, O, L> {
     }
 }
 
-impl<I: BitInteger, const O: usize> BitField<I, O, 1> {
+impl<I: BitInteger, const O: usize> BitFieldMut<'_, I, O, 1> {
     /// Converts bitfield to a bool value.
     #[inline]
     pub fn as_bool(&self) -> bool {
@@ -198,7 +261,7 @@ impl<I: BitInteger, const O: usize> BitField<I, O, 1> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{bitstruct, BitField};
+    use crate::{bitstruct, BitFieldMut};
 
     bitstruct! {
         pub struct Foo : u16 {
@@ -223,16 +286,17 @@ mod tests {
 
     #[test]
     fn test_bitfield_macro() {
-        let bar = Bar {
+        let mut bar = Bar {
             pad: 0,
             bitfield: 0b_1100_1010,
         };
+
         assert_eq!(bar.a().get(), 0b_1010);
         assert_eq!(bar.b().get(), 0b_100);
         assert_eq!(bar.c().as_bool(), true);
-        bar.a().set(0b_0011);
-        bar.b().set(0b_011);
-        bar.c().set_bool(false);
+        bar.a_mut().set(0b_0011);
+        bar.b_mut().set(0b_011);
+        bar.c_mut().set_bool(false);
         assert_eq!(bar.a().get(), 0b_0011);
         assert_eq!(bar.b().get(), 0b_011);
         assert_eq!(bar.c().as_bool(), false);
@@ -242,13 +306,13 @@ mod tests {
 
     #[test]
     fn test_bitstruct_macro() {
-        let foo = Foo::from_bits(0b_11111111_00001100);
+        let mut foo = Foo::from_bits(0b_11111111_00001100);
         assert_eq!(foo.a().get(), 0b_1100);
         assert_eq!(foo.b().get(), 0b_1111_0000);
         assert_eq!(foo.c().get(), 0b_1111);
-        foo.a().set(0b_0011);
-        foo.b().set(0b_0000_1111);
-        foo.c().set(0b_0010);
+        foo.a_mut().set(0b_0011);
+        foo.b_mut().set(0b_0000_1111);
+        foo.c_mut().set(0b_0010);
         assert_eq!(foo.a().get(), 0b_0011);
         assert_eq!(foo.b().get(), 0b_0000_1111);
         assert_eq!(foo.c().get(), 0b_0010);
@@ -259,8 +323,8 @@ mod tests {
     #[test]
     fn test_bitstruct_multi() {
         let mut byte = 0b_11111111_00001100;
-        let f1 = unsafe { BitField::<u16, 4, 8>::from_ptr(&mut byte as *mut _ as _) };
-        let f2 = unsafe { BitField::<u16, 0, 4>::from_ptr(&mut byte as *mut _ as _) };
+        let f1 = unsafe { BitFieldMut::<u16, 4, 8>::from_ptr(&mut byte as *mut _ as _) };
+        let f2 = unsafe { BitFieldMut::<u16, 0, 4>::from_ptr(&mut byte as *mut _ as _) };
         assert_eq!(f1.get(), 0b_1111_0000);
         assert_eq!(f2.get(), 0b_1100);
         f1.set(0b_0000_1111);
@@ -273,8 +337,8 @@ mod tests {
     #[test]
     fn test_bitstruct_bool() {
         let mut byte = 0b_10101010;
-        let f1 = unsafe { BitField::<u8, 3, 1>::from_ptr(&mut byte as *mut _ as _) };
-        let f2 = unsafe { BitField::<u8, 4, 1>::from_ptr(&mut byte as *mut _ as _) };
+        let f1 = unsafe { BitFieldMut::<u8, 3, 1>::from_ptr(&mut byte as *mut _ as _) };
+        let f2 = unsafe { BitFieldMut::<u8, 4, 1>::from_ptr(&mut byte as *mut _ as _) };
         assert!(f1.as_bool());
         assert!(!f2.as_bool());
         f1.set_bool(false);

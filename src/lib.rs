@@ -41,3 +41,5 @@ pub use bitflags::bitflags;
 pub use memoffset;
 pub use memoffset::offset_of;
 pub use obfstr;
+#[doc(hidden)]
+pub use paste::paste;
