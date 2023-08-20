@@ -97,8 +97,7 @@ memflex::makestruct! {
     }
 
     // By using `dyn ParentWithVmt`, child offsets all of their vfunc indices by the number of functions in `ParentWithVmt`,
-    // should work with nested inheritance but hasn't been tested!
-    // This macro assumes msvc virtual parenting behavior when for each child a separate vmt is generated.
+    // should work with nested inheritance but hasn't been tested so I just pray it works.
     struct ChildInheritsParentVmt impl ChildVmt(dyn ParentWithVmt) : pub ParentWithVmt {
         t3: u64,
         t4: i8
