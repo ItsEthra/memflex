@@ -101,8 +101,8 @@ impl<const N: usize> Pattern<N> {
         let mut j = 0;
 
         while i < pat.len() - 1 {
-            let c1 = unsafe { *pat.as_ptr().add(i) };
-            let c2 = unsafe { *pat.as_ptr().add(i + 1) };
+            let c1 = pat.as_bytes()[i];
+            let c2 = pat.as_bytes()[i + 1];
 
             if c1 == b'?' && c2 == if peid { b'?' } else { b' ' } {
                 out[j] = ByteMatch::Any;
@@ -168,11 +168,11 @@ impl<const N: usize> Pattern<N> {
 
         let mut i = 0;
         while i < mask.len() {
-            let mask = unsafe { *mask.as_ptr().add(i) } as char;
+            let mask = mask.as_bytes()[i];
 
             match mask {
-                'x' => out[i] = ByteMatch::Exact(pat[i]),
-                '?' => out[i] = ByteMatch::Any,
+                b'x' => out[i] = ByteMatch::Exact(pat[i]),
+                b'?' => out[i] = ByteMatch::Any,
                 _ => panic!("Invalid pattern"),
             }
 
@@ -229,8 +229,8 @@ pub const fn __ida_peid_count(pat: &'static str, peid: bool) -> usize {
     let mut j = 0;
 
     while i < pat.len() - 1 {
-        let c1 = unsafe { *pat.as_ptr().add(i) };
-        let c2 = unsafe { *pat.as_ptr().add(i + 1) };
+        let c1 = pat.as_bytes()[i];
+        let c2 = pat.as_bytes()[i + 1];
 
         if c1 == b'?' && c2 == if peid { b'?' } else { b' ' } {
             j += 1;
