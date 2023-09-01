@@ -28,6 +28,5 @@ fn test_parenting() {
     orig.e = 3.1;
     orig.f = 9;
 
-    let parent: &Foo = unsafe { orig.cast_ref::<Foo>() };
-    assert_eq!(orig.a, parent.a);
+    assert_eq!(orig.a, orig.parent.a);
 }

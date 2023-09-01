@@ -82,19 +82,6 @@ macro_rules! makestruct {
                 ),*
             }
 
-            impl $crate::Cast for $sname {}
-            #[allow(dead_code)]
-            impl $sname {
-                pub unsafe fn cast_ref<T: $crate::Cast>(&self) -> &T {
-                    unsafe { core::mem::transmute_copy::<&Self, &T>(&self) }
-                }
-
-                pub unsafe fn cast_mut<T: $crate::Cast>(&mut self) -> &mut T {
-                    unsafe { core::mem::transmute_copy::<&mut Self, &mut T>(&self) }
-                }
-
-            }
-
             $(
                 $(
                     unsafe impl $iface for $sname {

@@ -1,7 +1,7 @@
 use core::{
     marker::PhantomData,
-    mem::transmute,
     ops::Deref,
+    ptr::addr_of,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -78,6 +78,12 @@ impl<F> Deref for Function<F> {
 
     fn deref(&self) -> &Self::Target {
         self.force();
-        unsafe { transmute(self) }
+
+        unsafe {
+            addr_of!(self.address)
+                .cast::<Self::Target>()
+                .as_ref()
+                .unwrap()
+        }
     }
 }

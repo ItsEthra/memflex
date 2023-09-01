@@ -6,7 +6,6 @@ pub fn actual_add(a: i32, b: i32) -> i32 {
 memflex::function! {
     // Offset could change if you compile the example
     fn ADDER(i32, i32) -> i32 = "function.exe"#0x30A0;
-
     fn MIXER(f32, f32, f32) -> u32 = "function.exe"%"48 81 EC B8 00 00 00 F3";
 }
 
