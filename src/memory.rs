@@ -54,8 +54,12 @@ pub unsafe fn terminated_array_mut<'a, T: PartialEq>(mut first: *mut T, last: T)
 /// * All offsets must lead to valid memory addresses.
 #[inline]
 pub unsafe fn resolve_multilevel<T>(mut base: *const u8, offsets: &[usize]) -> *const T {
-    offsets.iter().for_each(|&o| {
-        base = base.add(o).cast::<usize>().read() as _;
+    offsets.iter().enumerate().for_each(|(i, &o)| {
+        if i != offsets.len() - 1 {
+            base = base.add(o).cast::<*const u8>().read();
+        } else {
+            base = base.add(o);
+        }
     });
 
     base.cast()
@@ -66,11 +70,62 @@ pub unsafe fn resolve_multilevel<T>(mut base: *const u8, offsets: &[usize]) -> *
 /// * All offsets must lead to valid memory addresses.
 #[inline]
 pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut u8, offsets: &[usize]) -> *mut T {
-    offsets.iter().for_each(|&o| {
-        base = base.add(o).cast::<usize>().read() as _;
+    offsets.iter().enumerate().for_each(|(i, &o)| {
+        if i != offsets.len() - 1 {
+            base = base.add(o).cast::<*mut u8>().read();
+        } else {
+            base = base.add(o);
+        }
     });
 
     base.cast()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::resolve_multilevel;
+    use core::{mem::zeroed, ptr::addr_of};
+
+    #[test]
+    fn test_multilevel() {
+        #[repr(C)]
+        struct S1 {
+            pad: [u8; 0x10],
+            next: Box<S2>,
+        }
+
+        #[repr(C)]
+        struct S2 {
+            pad: [u8; 0x20],
+            next: Box<S3>,
+        }
+
+        #[repr(C)]
+        struct S3 {
+            pad: [u8; 0x30],
+            value: usize,
+        }
+
+        let s1 = unsafe {
+            S1 {
+                next: S2 {
+                    next: S3 {
+                        value: 1337,
+                        pad: zeroed(),
+                    }
+                    .into(),
+                    pad: zeroed(),
+                }
+                .into(),
+                pad: zeroed(),
+            }
+        };
+
+        unsafe {
+            let ptr = resolve_multilevel::<usize>(addr_of!(s1).cast(), &[0x10, 0x20, 0x30]);
+            assert_eq!(*ptr, 1337);
+        }
+    }
 }
 
 /// Searches for a pattern internally by start address and search length.
