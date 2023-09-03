@@ -6,7 +6,7 @@ fn main() {
     };
 
     unsafe {
-        let ldr = Teb::current().peb.ldr;
+        let ldr = Teb::get().peb.ldr;
         for e in iter_list!(
             &ldr.in_memory_order_list,
             LdrDataTableEntry,

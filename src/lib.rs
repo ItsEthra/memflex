@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![recursion_limit = "256"]
 
 mod macros;
 pub use macros::*;

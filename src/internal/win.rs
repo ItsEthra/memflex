@@ -12,7 +12,7 @@ use windows::Win32::{
 pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo> {
     use crate::types::{win::Teb, ModuleInfo};
 
-    Teb::current()
+    Teb::get()
         .peb
         .ldr
         .iter()
@@ -41,7 +41,7 @@ pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo
 pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
     use crate::types::{win::Teb, ModuleInfoWithName};
 
-    Teb::current().peb.ldr.iter().map(|e| unsafe {
+    Teb::get().peb.ldr.iter().map(|e| unsafe {
         ModuleInfoWithName {
             base: e.dll_base,
             size: e.image_size as usize,

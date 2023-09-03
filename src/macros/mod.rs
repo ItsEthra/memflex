@@ -177,7 +177,7 @@ macro_rules! assert_size {
 macro_rules! assert_offset {
     ($target:ty, $( $($field:ident).*, $offset:expr),* $(,)?) => {
         $(
-            const _: () = if memflex::offset_of!($target, $($field).*) != $offset {
+            const _: () = if $crate::offset_of!($target, $($field).*) != $offset {
                 panic!(concat!(
                     "Offset assertion failed! offset_of!(",
                     stringify!($target),

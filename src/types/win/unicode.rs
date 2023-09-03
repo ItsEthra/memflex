@@ -91,18 +91,26 @@ impl UnicodeString {
         self.as_slice().iter().map(|b| *b as u8 as char)
     }
 
-    /// Creates an iterator over valid UTF-16 string characters, invalid characters are skipped
+    /// Creates an iterator over valid UTF-16 string characters, invalid characters are replaced
+    /// with replacement character.
     /// # Safety
     /// * [`UnicodeString`] must be a valid pointer
     #[inline]
     pub unsafe fn utf16(&self) -> impl Iterator<Item = char> {
-        char::decode_utf16(self.as_slice().iter().cloned()).flatten()
+        char::decode_utf16(self.as_slice().iter().cloned()).map(|ch| match ch {
+            Ok(c) => c,
+            Err(_) => char::REPLACEMENT_CHARACTER,
+        })
     }
 }
 
 impl PartialEq for UnicodeString {
     fn eq(&self, other: &Self) -> bool {
-        if self.is_null() || other.is_null() || self.bytes_len() != other.bytes_len() {
+        if self.is_null() && other.is_null() {
+            return true;
+        }
+
+        if self.bytes_len() != other.bytes_len() {
             false
         } else {
             unsafe { self.as_slice() == other.as_slice() }
