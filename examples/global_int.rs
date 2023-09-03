@@ -1,3 +1,4 @@
+#[no_mangle]
 static mut SOME_INT: i32 = 15;
 
 memflex::global! {
@@ -7,6 +8,8 @@ memflex::global! {
 
 fn main() {
     unsafe {
+        assert_eq!(SOME_INT, *GLOBAL_INT);
+        SOME_INT += 10;
         assert_eq!(SOME_INT, *GLOBAL_INT);
     }
 }

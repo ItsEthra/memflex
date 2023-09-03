@@ -13,27 +13,23 @@ pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo
     use crate::types::{win::Teb, ModuleInfo};
 
     unsafe {
-        Teb::get()
-            .peb
-            .as_ref()
-            .ldr
-            .as_ref()
-            .iter()
-            .filter(|e| e.base_dll_name.len() == module_name.len())
-            .find_map(|e| {
-                if e.base_dll_name
-                    .utf16()
-                    .zip(module_name.chars())
-                    .all(|(a, b)| a.eq_ignore_ascii_case(&b))
-                {
-                    Some(ModuleInfo {
-                        size: e.image_size as usize,
-                        base: e.dll_base,
-                    })
-                } else {
-                    None
-                }
-            })
+        let mut iter = Teb::get().peb.as_ref().ldr.as_ref().iter();
+        iter.next();
+
+        iter.find_map(|e| {
+            if e.base_dll_name
+                .utf16()
+                .zip(module_name.chars())
+                .all(|(a, b)| a.eq_ignore_ascii_case(&b))
+            {
+                Some(ModuleInfo {
+                    size: e.image_size as usize,
+                    base: e.dll_base,
+                })
+            } else {
+                None
+            }
+        })
     }
 }
 

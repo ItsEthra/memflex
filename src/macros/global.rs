@@ -5,8 +5,8 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// Global variable with explicitly defined offset.
 pub struct Global<T> {
+    address: AtomicUsize,
     init: fn() -> usize,
-    value: AtomicUsize,
     _pd: PhantomData<T>,
 }
 
@@ -14,7 +14,7 @@ impl<T> Global<T> {
     #[doc(hidden)]
     pub const fn new(init: fn() -> usize) -> Self {
         Self {
-            value: AtomicUsize::new(0),
+            address: AtomicUsize::new(0),
             init,
             _pd: PhantomData,
         }
@@ -22,10 +22,10 @@ impl<T> Global<T> {
 
     /// Returns the address of the global.
     pub fn address(&self) -> usize {
-        let mut value = self.value.load(Ordering::Acquire);
+        let mut value = self.address.load(Ordering::Acquire);
         if value == 0 {
             value = (self.init)();
-            self.value.store(value, Ordering::Release);
+            self.address.store(value, Ordering::Release);
         }
 
         value
@@ -42,8 +42,7 @@ impl<T> Deref for Global<T> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        let value = self.value.load(Ordering::Relaxed);
-        assert!(value != 0);
+        let value = self.address();
         unsafe { transmute(value) }
     }
 }
@@ -51,8 +50,7 @@ impl<T> Deref for Global<T> {
 impl<T> DerefMut for Global<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        let value = self.value.load(Ordering::Relaxed);
-        assert!(value != 0);
+        let value = self.address();
         unsafe { transmute(value) }
     }
 }

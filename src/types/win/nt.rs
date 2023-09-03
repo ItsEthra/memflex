@@ -19,7 +19,7 @@ crate::makestruct! {
 
     pub struct PebLdrData {
         _pad: [u8; 0x20],
-        pub in_memory_order_list: ListEntry<0x20, LdrDataTableEntry>
+        pub in_memory_order_list: ListEntry<0x10, LdrDataTableEntry>
     }
 
     pub struct LdrDataTableEntry {
