@@ -32,7 +32,7 @@ const fn single(c: char) -> u8 {
 /// let code = code_pat!(b"\x11\x00\x33", "x?x");
 /// assert!(ida.matches(data) && peid.matches(data) && code.matches(data));
 /// ```
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pattern<const N: usize>(pub(crate) [ByteMatch; N]);
 impl<const N: usize> Pattern<N> {
     #[cfg(feature = "alloc")]

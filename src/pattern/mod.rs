@@ -1,7 +1,7 @@
 mod r#static;
 pub use r#static::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum ByteMatch {
     Exact(u8),
     Any,
