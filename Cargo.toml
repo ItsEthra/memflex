@@ -22,7 +22,6 @@ internal = ["std"]
 external = ["std"]
 
 [dependencies]
-memoffset = "0.9.0"
 bitflags = "2.4.0"
 obfstr = "0.4.3"
 paste = "1.0.13"

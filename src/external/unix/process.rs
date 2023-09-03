@@ -1,11 +1,10 @@
 use crate::{
     external::{MemoryRegion, ProcessEntry},
-    sizeof,
     types::{ModuleInfoWithName, Protection},
     Matcher, MfError,
 };
 use core::{
-    mem::MaybeUninit,
+    mem::{size_of, MaybeUninit},
     slice::{from_raw_parts, from_raw_parts_mut},
 };
 use std::{
@@ -78,7 +77,7 @@ impl OwnedProcess {
             let mut buf: MaybeUninit<T> = MaybeUninit::uninit();
             self.read_buf(
                 address,
-                from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>() as _, sizeof!(T)),
+                from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>() as _, size_of::<T>()),
             )?;
             Ok(buf.assume_init())
         }
@@ -138,7 +137,7 @@ impl OwnedProcess {
         unsafe {
             self.write_buf(
                 address,
-                from_raw_parts(value as *const T as *const u8, sizeof!(T)),
+                from_raw_parts(value as *const T as *const u8, size_of::<T>()),
             )
         }
     }

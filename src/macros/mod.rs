@@ -88,18 +88,105 @@ macro_rules! __resolver {
 
 /// Gets the size in bytes of the type or the variable
 /// ```
-/// # use memflex::sizeof;
-/// assert_eq!(sizeof!(i32), 4);
+/// # use memflex::size_of;
+/// assert_eq!(size_of!(i32), 4);
 ///
 /// let var = 5_u64;
-/// assert_eq!(sizeof!(@var), 8);
+/// assert_eq!(size_of!(@var), 8);
 /// ```
 #[macro_export]
-macro_rules! sizeof {
+macro_rules! size_of {
     ($ty:ty) => {
         core::mem::size_of::<$ty>()
     };
     (@ $var:ident) => {
         core::mem::size_of_val(&$var)
     };
+}
+
+/// Gets the offset of the field.
+/// ```
+/// # use memflex::offset_of;
+/// #[repr(C)]
+/// struct Foo {
+///     a: u32,
+///     b: f32,
+///     value: usize
+/// }
+///
+/// let offset = offset_of!(Foo, value);
+/// assert_eq!(offset, 8);
+///
+/// const CONSTANT: usize = offset_of!(Foo, value);
+/// assert_eq!(CONSTANT, 8);
+/// ```
+#[macro_export]
+macro_rules! offset_of {
+    ($target:ty, $($field:tt).* $(,)?) => {{
+        let base = core::mem::MaybeUninit::<$target>::uninit();
+        let base_ptr = base.as_ptr();
+
+        #[allow(unused_unsafe)]
+        unsafe {
+            let field_ptr = core::ptr::addr_of!( (*base_ptr) $(.$field)* ).cast::<u8>();
+            field_ptr.offset_from(base_ptr.cast::<u8>()) as usize
+        }
+    }};
+}
+
+/// Asserts size of the type
+/// ```
+/// # use memflex::assert_size;
+/// #[repr(C)]
+/// struct Foo {
+///     a: u32,
+///     b: i32
+/// }
+/// // Doesn't compile
+/// // assert_size!(Foo, 4);
+///
+/// // Works fine
+/// assert_size!(Foo, 8);
+/// ```
+#[macro_export]
+macro_rules! assert_size {
+    ($target:ty, $size:expr) => {
+        const _: () = if core::mem::size_of::<$target>() != $size {
+            panic!(concat!(
+                "Size assertion failed! sizeof(",
+                stringify!($target),
+                ") != ",
+                stringify!($size)
+            ))
+        };
+    };
+}
+
+/// Asserts offset of the fields
+/// ```
+/// # use memflex::assert_offset;
+/// #[repr(C)]
+/// struct Foo {
+///     a: u32,
+///     b: i32
+/// }
+///
+/// assert_offset!(Foo, a, 0, b, 4);
+/// ```
+#[macro_export]
+macro_rules! assert_offset {
+    ($target:ty, $( $($field:ident).*, $offset:expr),* $(,)?) => {
+        $(
+            const _: () = if memflex::offset_of!($target, $($field).*) != $offset {
+                panic!(concat!(
+                    "Offset assertion failed! offset_of!(",
+                    stringify!($target),
+                    ", ",
+                    stringify!( $($field).* ),
+                    ") != ",
+                    stringify!($offset)
+                ))
+            };
+        )*
+    }
 }
