@@ -279,8 +279,12 @@ impl OwnedProcess {
 
     /// Resolves multilevel pointer
     pub fn resolve_multilevel(&self, mut base: usize, offsets: &[usize]) -> crate::Result<usize> {
-        for &o in offsets {
-            base = self.read(base + o)?;
+        for (i, &o) in offsets.iter().enumerate() {
+            if i != offsets.len() - 1 {
+                base = self.read(base + o)?;
+            } else {
+                base += o;
+            }
         }
 
         Ok(base)
