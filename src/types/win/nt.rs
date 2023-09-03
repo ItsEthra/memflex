@@ -8,13 +8,13 @@ crate::makestruct! {
     /// Thread environment block
     pub struct Teb {
         _pad: [u8; 0x60],
-        pub peb: Option<NonNull<Peb>>
+        pub peb: NonNull<Peb>
     }
 
     /// Process environment block
     pub struct Peb {
         _pad: [u8; 0x18],
-        pub ldr: Option<NonNull<PebLdrData>>,
+        pub ldr: NonNull<PebLdrData>,
     }
 
     pub struct PebLdrData {

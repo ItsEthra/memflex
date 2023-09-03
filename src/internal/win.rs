@@ -12,26 +12,29 @@ use windows::Win32::{
 pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo> {
     use crate::types::{win::Teb, ModuleInfo};
 
-    Teb::get()
-        .peb
-        .ldr
-        .iter()
-        .filter(|e| e.base_dll_name.len() == module_name.len())
-        .find_map(|e| {
-            if unsafe {
-                e.base_dll_name
+    unsafe {
+        Teb::get()
+            .peb
+            .as_ref()
+            .ldr
+            .as_ref()
+            .iter()
+            .filter(|e| e.base_dll_name.len() == module_name.len())
+            .find_map(|e| {
+                if e.base_dll_name
                     .utf16()
                     .zip(module_name.chars())
                     .all(|(a, b)| a.eq_ignore_ascii_case(&b))
-            } {
-                Some(ModuleInfo {
-                    size: e.image_size as usize,
-                    base: e.dll_base,
-                })
-            } else {
-                None
-            }
-        })
+                {
+                    Some(ModuleInfo {
+                        size: e.image_size as usize,
+                        base: e.dll_base,
+                    })
+                } else {
+                    None
+                }
+            })
+    }
 }
 
 /// Returns an iterator over all modules in the current process.
@@ -41,13 +44,19 @@ pub fn find_module_by_name(module_name: &str) -> Option<crate::types::ModuleInfo
 pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
     use crate::types::{win::Teb, ModuleInfoWithName};
 
-    Teb::get().peb.ldr.iter().map(|e| unsafe {
-        ModuleInfoWithName {
-            base: e.dll_base,
-            size: e.image_size as usize,
-            name: e.base_dll_name.to_string().unwrap(),
-        }
-    })
+    unsafe {
+        Teb::get()
+            .peb
+            .as_ref()
+            .ldr
+            .as_ref()
+            .iter()
+            .map(|e| ModuleInfoWithName {
+                base: e.dll_base,
+                size: e.image_size as usize,
+                name: e.base_dll_name.to_string().unwrap(),
+            })
+    }
 }
 
 /// Allocates new console.
