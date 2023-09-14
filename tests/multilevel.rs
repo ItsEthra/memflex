@@ -35,5 +35,7 @@ fn test_multilevel() {
 
         let v = resolve_multilevel::<*const i32>(&m1 as *const _ as _, &[0x10, 0x50, 0x8]);
         assert_eq!(**v, 1337);
+        let v = resolve_multilevel::<i32>(&m1 as *const _ as _, &[0x10, 0x50, 0x8, 0x0]);
+        assert_eq!(*v, 1337);
     }
 }
