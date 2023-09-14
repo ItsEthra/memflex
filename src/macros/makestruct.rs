@@ -108,7 +108,3 @@ macro_rules! makestruct {
         )*
     };
 }
-
-/// Trait implemented for types made by `makestruct`.
-/// It's a marker trait to allow casting between structs created by the macro.
-pub trait Cast {}
