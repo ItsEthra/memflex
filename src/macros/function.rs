@@ -26,7 +26,7 @@ use core::{
 macro_rules! function {
     (
         $(
-            $(extern $($abi:literal)?)? fn $fname:ident( $($atype:ty),* ) $(-> $ret:ty)? = $( ($resolver:ident) )? $modname:literal $sep:tt $offset:expr;
+            $(extern $($abi:literal)?)? fn $fname:ident( $($atype:ty),* ) $(-> $ret:ty)? = $( ($resolver:path) )? $modname:literal $sep:tt $offset:expr;
         )*
     ) => {
         $(

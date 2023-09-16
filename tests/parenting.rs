@@ -1,6 +1,15 @@
+use memflex::assert_size;
+
+mod inner {
+    #[derive(Debug, Default, PartialEq)]
+    pub struct Root<const N: usize> {
+        x: u64,
+    }
+}
+
 memflex::makestruct! {
     #[derive(Debug, Default, PartialEq)]
-    pub struct Foo {
+    pub struct Foo : inner::Root<4> {
         a: f32,
         b: bool
     }
@@ -17,6 +26,8 @@ memflex::makestruct! {
         f: u16
     }
 }
+
+assert_size!(inner::Root<8>, 8);
 
 #[test]
 fn test_parenting() {

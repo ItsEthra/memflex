@@ -62,7 +62,7 @@ macro_rules! makestruct {
             $( #[$($outter:tt)*] )*
             $vs:vis struct $sname:ident
                 $(impl $($iface:ident $((dyn $piface:ty))? ),* )?
-                $( : $pvis:vis $sparent:ident )?
+                $( : $pvis:vis $sparent:ty )?
             {
                 $(
                     $( #[ $($foutter:tt)* ] )*

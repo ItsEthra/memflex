@@ -29,7 +29,7 @@
 macro_rules! interface {
     {
         $(
-            $vs:vis trait $iname:ident $(impl for $($implt:ident),* )? {
+            $vs:vis trait $iname:ident $(impl for $($implt:ty),* )? {
                 $(
                     $(extern $($abi:literal)?)? fn $fname:ident( $($arg_name:ident: $arg_ty:ty),* )
                         $(-> $ret:ty)? = $sep:tt $idx:expr $(, $mod_name:literal)?;

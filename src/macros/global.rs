@@ -74,7 +74,7 @@ impl<T> DerefMut for Global<T> {
 macro_rules! global {
     {
         $(
-            $vs:vis extern $gname:ident: $gtype:ty = $( ($resolver:ident) )? $module:literal $sep:tt $offset:expr;
+            $vs:vis extern $gname:ident: $gtype:ty = $( ($resolver:path) )? $module:literal $sep:tt $offset:expr;
         )*
     } => {
         $(
