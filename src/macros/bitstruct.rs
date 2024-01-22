@@ -57,25 +57,13 @@ macro_rules! bitstruct {
                 $(
                     $crate::paste! {
                         $fvs fn [<$fname _mut >](&mut self) -> $crate::BitFieldMut<'_, $int, {$from % 8}, {$to - $from + 1}> {
-                            let x = if $from % 8 == 0 && $from != 0 {
-                                $from / 8 + 1
-                            } else {
-                                $from / 8
-                            };
-                            let ptr = unsafe { self.0.get().cast::<u8>().add(x) };
-
+                            let ptr = unsafe { self.0.get().cast::<u8>().add($from / 8) };
                             unsafe { $crate::BitFieldMut::from_ptr(ptr) }
                         }
                     }
 
                     $fvs fn $fname(&self) -> $crate::BitField<'_, $int, {$from % 8}, {$to - $from + 1}> {
-                        let x = if $from % 8 == 0 && $from != 0 {
-                            $from / 8 + 1
-                        } else {
-                            $from / 8
-                        };
-                        let ptr = unsafe { self.0.get().cast::<u8>().add(x) };
-
+                        let ptr = unsafe { self.0.get().cast::<u8>().add($from / 8) };
                         unsafe { $crate::BitField::from_ptr(ptr) }
                     }
                 )*
@@ -196,6 +184,8 @@ impl<'r, I: BitInteger, const O: usize, const L: usize> BitField<'r, I, O, L> {
     /// Returns the value of this bitfield.
     #[inline]
     pub fn get(&self) -> I {
+        dbg!(O, L);
+
         let mut val = unsafe { self.ptr.cast::<I>().read_unaligned() };
         val = val.shr(O).mask(L);
         val
@@ -348,5 +338,21 @@ mod tests {
         assert!(!f1.as_bool());
         assert!(f2.as_bool());
         assert_eq!(byte, 0b_10110010);
+    }
+
+    bitstruct! {
+        pub struct Trouble : u32 {
+            foo: 16..=20,
+            bar: 7..=18,
+        }
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn test_trouble() {
+        let x = Trouble::from_bits(0b_10010100_00010010_10000010_u32);
+                                              // 32109876_54321098_76543210
+        assert_eq!(x.foo().get(), 0x14);
+        assert_eq!(x.bar().get(), 0b100000100101);
     }
 }
