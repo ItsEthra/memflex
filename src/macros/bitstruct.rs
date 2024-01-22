@@ -42,6 +42,7 @@ macro_rules! bitstruct {
             unsafe impl Sync for $sname {}
 
             #[allow(dead_code)]
+            #[allow(clippy::eq_op, clippy::identity_op)]
             impl $sname {
                 #[inline]
                 pub fn bits(&self) -> $int {
@@ -55,7 +56,7 @@ macro_rules! bitstruct {
 
                 $(
                     $crate::paste! {
-                        $fvs fn [<$fname _mut >]<'this>(&'this mut self) -> $crate::BitFieldMut<'this, $int, {$from % 8}, {$to - $from + 1}> {
+                        $fvs fn [<$fname _mut >](&mut self) -> $crate::BitFieldMut<'_, $int, {$from % 8}, {$to - $from + 1}> {
                             let x = if $from % 8 == 0 && $from != 0 {
                                 $from / 8 + 1
                             } else {
@@ -67,7 +68,7 @@ macro_rules! bitstruct {
                         }
                     }
 
-                    $fvs fn $fname<'this>(&'this self) -> $crate::BitField<'this, $int, {$from % 8}, {$to - $from + 1}> {
+                    $fvs fn $fname(&self) -> $crate::BitField<'_, $int, {$from % 8}, {$to - $from + 1}> {
                         let x = if $from % 8 == 0 && $from != 0 {
                             $from / 8 + 1
                         } else {
@@ -140,6 +141,7 @@ macro_rules! bitfields {
         )*
     } => {
         $(
+            #[allow(clippy::eq_op, clippy::identity_op)]
             impl $target {
                 $(
                     $crate::paste! {
@@ -293,13 +295,13 @@ mod tests {
 
         assert_eq!(bar.a().get(), 0b_1010);
         assert_eq!(bar.b().get(), 0b_100);
-        assert_eq!(bar.c().as_bool(), true);
+        assert!(bar.c().as_bool());
         bar.a_mut().set(0b_0011);
         bar.b_mut().set(0b_011);
         bar.c_mut().set_bool(false);
         assert_eq!(bar.a().get(), 0b_0011);
         assert_eq!(bar.b().get(), 0b_011);
-        assert_eq!(bar.c().as_bool(), false);
+        assert!(!bar.c().as_bool());
         assert_eq!(bar.pad, 0);
         assert_eq!(bar.bitfield, 0b_0011_0011);
     }

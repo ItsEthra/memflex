@@ -55,6 +55,7 @@ memflex::interface! {
 }
 
 #[test]
+#[allow(clippy::disallowed_names)]
 fn test_interface() {
     let foo = game::Foo::new();
 

@@ -1,8 +1,6 @@
-mod interface;
-pub use interface::*;
-mod makestruct;
-pub use makestruct::*;
 mod global;
+mod interface;
+mod makestruct;
 pub use global::*;
 mod function;
 pub use function::*;

@@ -103,7 +103,7 @@ impl OwnedProcess {
             offset += STRIDE
         }
 
-        Ok(String::from_utf8(out).map_err(|_| MfError::InvalidString)?)
+        String::from_utf8(out).map_err(|_| MfError::InvalidString)
     }
 
     /// Writes process memory, returning amount of bytes written.
@@ -311,8 +311,7 @@ impl ProcessIterator {
                         None
                     }
                 })
-                .map(|p| p.parse::<u32>().ok())
-                .flatten()
+                .and_then(|p| p.parse::<u32>().ok())
                 .unwrap();
 
             parent_id

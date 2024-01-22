@@ -81,6 +81,41 @@ pub unsafe fn resolve_multilevel_mut<T>(mut base: *mut u8, offsets: &[usize]) ->
     base.cast()
 }
 
+/// Searches for a pattern internally by start address and search length.
+/// # Safety
+/// * `start` is a valid pointer and can be read
+/// * Memory from `start` to `start + len` (inclusive) can be read
+#[inline]
+pub unsafe fn find_pattern(
+    pat: impl Matcher,
+    start: *const u8,
+    len: usize,
+) -> impl Iterator<Item = *const u8> {
+    assert!(!start.is_null());
+
+    from_raw_parts::<u8>(start, len)
+        .windows(pat.len())
+        .enumerate()
+        .filter_map(move |(i, bytes)| {
+            if pat.matches(bytes) {
+                Some(start.add(i))
+            } else {
+                None
+            }
+        })
+}
+
+/// Searches for a pattern internally in a given range.
+/// # Safety
+/// * Range represents a chunk of memory that can be read.
+#[inline]
+pub unsafe fn find_pattern_range(
+    pat: impl Matcher,
+    range: RangeInclusive<usize>,
+) -> impl Iterator<Item = *const u8> {
+    find_pattern(pat, *range.start() as _, *range.end() - *range.start())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::resolve_multilevel;
@@ -126,39 +161,4 @@ mod tests {
             assert_eq!(*ptr, 1337);
         }
     }
-}
-
-/// Searches for a pattern internally by start address and search length.
-/// # Safety
-/// * `start` is a valid pointer and can be read
-/// * Memory from `start` to `start + len` (inclusive) can be read
-#[inline]
-pub unsafe fn find_pattern(
-    pat: impl Matcher,
-    start: *const u8,
-    len: usize,
-) -> impl Iterator<Item = *const u8> {
-    assert!(!start.is_null());
-
-    from_raw_parts::<u8>(start, len)
-        .windows(pat.len())
-        .enumerate()
-        .filter_map(move |(i, bytes)| {
-            if pat.matches(bytes) {
-                Some(start.add(i))
-            } else {
-                None
-            }
-        })
-}
-
-/// Searches for a pattern internally in a given range.
-/// # Safety
-/// * Range represents a chunk of memory that can be read.
-#[inline]
-pub unsafe fn find_pattern_range(
-    pat: impl Matcher,
-    range: RangeInclusive<usize>,
-) -> impl Iterator<Item = *const u8> {
-    find_pattern(pat, *range.start() as _, *range.end() - *range.start())
 }

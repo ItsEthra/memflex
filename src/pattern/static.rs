@@ -34,6 +34,8 @@ const fn single(c: char) -> u8 {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pattern<const N: usize>(pub(crate) [ByteMatch; N]);
+
+#[allow(clippy::wrong_self_convention)]
 impl<const N: usize> Pattern<N> {
     #[cfg(feature = "alloc")]
     fn to_ida_peid_style(&self, peid: bool) -> String {

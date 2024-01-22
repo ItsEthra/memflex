@@ -38,6 +38,7 @@ macro_rules! interface {
         )*
     } => {
         $(
+            #[allow(clippy::missing_safety_doc)]
             $vs unsafe trait $iname: Sized {
                 const INDEX_OFFSET: usize = 0;
                 const FUNCTION_COUNT: usize = $( $crate::__count_fns!($fname) + )*0;
@@ -72,6 +73,7 @@ macro_rules! __gen_func {
             unsafe {
                 type Fn<'this> = $(extern $($abi)?)? fn(*const (), $($arg_ty),*) $(-> $ret)?;
 
+                #[allow(clippy::useless_transmute)]
                 ((**core::mem::transmute::<_, *const *const [Fn<'this>; $idx + 1]>(self))[Self::INDEX_OFFSET + $idx])(
                     self as *const Self as _,
                     $($arg_name),*

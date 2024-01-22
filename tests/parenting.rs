@@ -30,6 +30,7 @@ memflex::makestruct! {
 assert_size!(inner::Root<8>, 8);
 
 #[test]
+#[allow(clippy::field_reassign_with_default)]
 fn test_parenting() {
     let mut orig = Quz::default();
     orig.a = 1.0;
