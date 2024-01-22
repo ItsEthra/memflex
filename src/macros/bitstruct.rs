@@ -184,8 +184,6 @@ impl<'r, I: BitInteger, const O: usize, const L: usize> BitField<'r, I, O, L> {
     /// Returns the value of this bitfield.
     #[inline]
     pub fn get(&self) -> I {
-        dbg!(O, L);
-
         let mut val = unsafe { self.ptr.cast::<I>().read_unaligned() };
         val = val.shr(O).mask(L);
         val
