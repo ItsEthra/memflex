@@ -45,7 +45,7 @@ impl<const OFFSET: usize, T> ListEntry<OFFSET, T> {
     }
 
     /// Assuming `self` is a list head, iterate over immutable references to all items in the list.
-    pub unsafe fn iter<'r>(&self) -> impl Iterator<Item = &'r T> {
+    pub unsafe fn iter<'r>(&self) -> impl Iterator<Item = &'r T> where T: 'r {
         let last = self.prev.map(|v| v.as_ptr().cast_const());
         let mut current = last;
         core::iter::from_fn(move || unsafe {
@@ -60,7 +60,7 @@ impl<const OFFSET: usize, T> ListEntry<OFFSET, T> {
     }
 
     /// Assuming `self` is a list head, iterate over mutable references to all items in the list.
-    pub unsafe fn iter_mut<'r>(&mut self) -> impl Iterator<Item = &'r mut T> {
+    pub unsafe fn iter_mut<'r>(&mut self) -> impl Iterator<Item = &'r mut T> where T: 'r {
         let last = self.prev.map(|v| v.as_ptr());
         let mut current = last;
         core::iter::from_fn(move || unsafe {
