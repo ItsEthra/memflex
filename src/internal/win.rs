@@ -57,12 +57,12 @@ pub fn modules() -> impl Iterator<Item = crate::types::ModuleInfoWithName> {
 
 /// Allocates new console.
 pub fn alloc_console() -> bool {
-    unsafe { AllocConsole().as_bool() }
+    unsafe { AllocConsole().is_ok() }
 }
 
 /// Frees the console.
 pub fn free_console() -> bool {
-    unsafe { FreeConsole().as_bool() }
+    unsafe { FreeConsole().is_ok() }
 }
 
 /// Frees the library and exits current thread.
