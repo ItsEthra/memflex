@@ -32,7 +32,10 @@ impl MfError {
 
     #[cfg(all(unix, feature = "std"))]
     pub(crate) fn last<T>() -> Result<T> {
+        #[cfg(target_os = "linux")]
         unsafe { Err(MfError::Errno(*libc::__errno_location())) }
+        #[cfg(target_os = "macos")]
+        unsafe { Err(MfError::Errno(*libc::__error())) }
     }
 }
 
